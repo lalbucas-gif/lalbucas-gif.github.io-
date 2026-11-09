@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lalbucas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ /* layout: uma coluna de trabalho — exame em cima, laudo validado embaixo, como na estação de laudo */
+ --bg:#eef1f5; --panel:#ffffff; --ink:#18202b; --muted:#5b6778; --line:#d5dbe4;
+ --accent:#1d5fb8; --accent-ink:#ffffff; --warn:#9a5b00; --warn-bg:#fdf1dd; --ok:#1d7a46; --ok-bg:#e3f4ea; --err:#b3261e; --err-bg:#fbe7e5;
+ --font-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+ --font-body:"IBM Plex Sans",-apple-system,"Segoe UI",Arial,sans-serif;
+ color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+ :root:not([data-theme="light"]){--bg:#0f141b;--panel:#171e28;--ink:#e6ebf2;--muted:#97a3b4;--line:#2a3442;--accent:#5b9bef;--accent-ink:#0b1220;--warn:#f0b35a;--warn-bg:#33270f;--ok:#5fcf8f;--ok-bg:#12291c;--err:#f28b82;--err-bg:#35161a;color-scheme:dark;}
+}
+:root[data-theme="dark"]{--bg:#0f141b;--panel:#171e28;--ink:#e6ebf2;--muted:#97a3b4;--line:#2a3442;--accent:#5b9bef;--accent-ink:#0b1220;--warn:#f0b35a;--warn-bg:#33270f;--ok:#5fcf8f;--ok-bg:#12291c;--err:#f28b82;--err-bg:#35161a;color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;letter-spacing:.2px;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:600;font-size:17px;margin:0;text-wrap:balance}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:4px 10px;border-radius:999px;background:var(--warn-bg);color:var(--warn)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.chip.on{background:var(--ok-bg);color:var(--ok)}
+.status.work{background:var(--bg);color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+label{display:grid;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+textarea{min-height:92px;resize:vertical}
+select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;font-weight:500;border-radius:8px;padding:10px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.status{font-size:13px;font-weight:500;padding:8px 10px;border-radius:8px}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.status.err{background:var(--err-bg);color:var(--err)}
+.paper{background:#ffffff;color:#000000;border:1px solid var(--line);border-radius:6px;padding:20px 22px;overflow-x:auto}
+.copy{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag{font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header>
+  <h1>Lalbucas</h1>
+ </header>
+
+ <section class="panel" aria-labelledby="t-exame">
+  <h2 id="t-exame">Exame</h2>
+  <div class="row">
+   <label for="rota">Exame
+    <select id="rota">
+     <option value="abdomen-full">TC de abdome superior e pelve</option>
+     <option value="ct-chest-full">TC de tórax</option>
+     <option value="ct-cranium-full">TC de crânio</option>
+     <option value="us-abdomen-full">US de abdome total</option>
+     <option value="us-doppler-venoso-mmii-full">Doppler venoso de MMII (TVP)</option>
+     <option value="rm-cranium-full">RM de crânio</option>
+     <option value="rm-pelvis-endo-full">RM de pelve (endometriose)</option>
+    </select>
+   </label>
+   <label for="indicacao">Indicação
+    <input id="indicacao" value="dor abdominal.">
+   </label>
+  </div>
+  <div class="row" id="row-extra">
+   <label for="lateralidade" id="lat-wrap" class="hidden">Lateralidade
+    <select id="lateralidade">
+     <option value="direito">Direito</option>
+     <option value="esquerdo">Esquerdo</option>
+     <option value="bilateral">Bilateral</option>
+    </select>
+   </label>
+   <label for="tecnica" id="tec-wrap" class="hidden">Técnica (RM)
+    <input id="tecnica" value="estudo por ressonância magnética do crânio.">
+   </label>
+  </div>
+  <div class="actions">
+   <button class="primary" id="btn-normal">Gerar laudo normal</button>
+  </div>
+  <p class="hint">O laudo é montado e validado neste navegador. Nada é enviado para fora.</p>
+ </section>
+
+ <section class="panel" aria-labelledby="t-laudo">
+  <div class="actions" style="justify-content:space-between">
+   <h2 id="t-laudo">Laudo</h2>
+   <span class="tag" id="origem">Normal</span>
+  </div>
+  <div class="status ok" id="status">Validado: formato RIS e cobertura de compartimentos OK.</div>
+  <div class="paper" id="preview"></div>
+  <div class="copy">
+   <button id="btn-html">Copiar HTML</button>
+   <button id="btn-fmt">Copiar formatado</button>
+  </div>
+ </section>
+</div>
+
+<script type="text/plain" id="motor">(()=>{
+// Operational abdominal baseline (not certified as the most recently user-approved
+// complete mask). Only historically evidenced fragments may be called approved.
+// The 2026-10-21 correction excludes "distensão anômala" from normality blocks.
+const CT_ABDOMEN_MASK_SOURCE='core:ct-abdomen-pelvis-working-v2';
+const CT_ABDOMEN_MASK_BLOCKS=Object.freeze([
+ 'Fígado com dimensões, contornos e densidade preservados.',
+ 'Vesícula biliar sem cálculos radiodensos. Não há dilatação das vias biliares.',
+ 'Pâncreas, baço e adrenais sem alterações tomográficas significativas.',
+ 'Rins com dimensões e contornos preservados bilateralmente, sem sinais de litíase ou dilatação dos sistemas coletores. Ureteres sem dilatação.',
+ 'Aorta abdominal e veia cava inferior com calibres preservados.',
+ 'Alças intestinais com calibre preservado, sem sinais de obstrução ou alterações inflamatórias periapendiculares.',
+ 'Bexiga com contornos regulares, sem espessamento parietal evidente.',
+ 'Ausência de linfonodomegalias, líquido livre, coleções ou pneumoperitônio.',
+ 'Estruturas ósseas incluídas sem lesões focais evidentes.'
+]);
+function abdomenMask(){return {sourceId:CT_ABDOMEN_MASK_SOURCE,blocks:[...CT_ABDOMEN_MASK_BLOCKS]};}
+function isFullCTAbdomen(s){const title=norm(s.title);return /(?:tomografia|\btc\b)/.test(title)&&/abdom/.test(title)&&/pelve/.test(title)&&s.sourceContract?.scope==='FULL';}
+// Literal <abdome_total><canonical_normal> from Guardian 8.5.20.
+// The route avoids source searching between dictation and the clinical renderer.
+const US_ABDOMEN_MASK_SOURCE='guardian-runtime-8.5.20.txt:abdome_total:canonical_normal';
+const US_ABDOMEN_MASK_BLOCKS=Object.freeze([
+ 'Fígado com dimensões preservadas, contornos regulares e parênquima com ecogenicidade e ecotextura homogêneas.',
+ 'Vesícula biliar normodistendida, de paredes finas e regulares, com conteúdo anecoico e sem imagens calculosas. Vias biliares intra e extra-hepáticas sem dilatação.',
+ 'Pâncreas, nas porções visibilizadas, com dimensões, contornos e ecotextura preservados.',
+ 'Baço com dimensões preservadas, contornos regulares e ecotextura homogênea.',
+ 'Aorta abdominal com calibre preservado nos segmentos avaliados. Veia cava inferior sem alterações ultrassonográficas significativas.',
+ 'Rins tópicos, com dimensões e contornos preservados, espessura parenquimatosa e ecogenicidade habituais, mantendo diferenciação corticomedular, sem dilatação dos sistemas coletores.',
+ 'Bexiga sem alterações ultrassonográficas significativas, quando adequadamente repleta para avaliação.',
+ 'Não se observa líquido livre na cavidade abdominal.'
+]);
+function usAbdomenMask(){return {sourceId:US_ABDOMEN_MASK_SOURCE,blocks:[...US_ABDOMEN_MASK_BLOCKS]};}
+function isFullUSAbdomen(s){return s.title==='ULTRASSONOGRAFIA DO ABDOME TOTAL'&&s.sourceContract?.scope==='FULL';}
+// Doppler venoso de MMII (pesquisa de TVP): texto clínico adaptado da máscara do Drive
+// "VENOSO MMII - TVP" (Máscaras atualizadas 2026), modelos NORMAL unilateral/bilateral.
+// Cobertura conforme VENOUS_DOPPLER_COMPACT_FULL_PROTOCOL_8520 do Guardian 8.5.20.
+const US_DOPPLER_MMII_MASK_SOURCE='drive:VENOSO_MMII_TVP:2026:normal_unilateral_bilateral';
+const US_DOPPLER_MMII_TITLES=Object.freeze({
+ direito:'ECODOPPLER VENOSO DO MEMBRO INFERIOR DIREITO',
+ esquerdo:'ECODOPPLER VENOSO DO MEMBRO INFERIOR ESQUERDO',
+ bilateral:'ECODOPPLER VENOSO DOS MEMBROS INFERIORES'
+});
+function usDopplerLimbBlocks(side,prefixed){const m=prefixed?'Membro inferior '+side+': ':'';const M=prefixed?'Membro inferior '+side+': ':'';return [
+ m+'Veias femorais comum, superficial e profunda pérvias, compressíveis, de calibres normais e com fluxo fásico com a respiração.',
+ M+'Veia poplítea pérvia, compressível, de calibre normal e com fluxo fásico com a respiração.',
+ M+'Veias gastrocnêmias, soleares, fibulares, tibiais anteriores e tibiais posteriores pérvias, compressíveis, de calibres normais e com fluxos preservados.',
+ M+'Veia safena magna pérvia, compressível, de calibre normal e com fluxo preservado.',
+ M+'Veia safena parva pérvia, compressível, de calibre normal e com fluxo preservado.'
+];}
+function usDopplerLaterality(title){
+ const t=Object.entries(US_DOPPLER_MMII_TITLES).find(([,v])=>v===title);
+ if(!t)throw Error('us_doppler_mmii_title_required');
+ return t[0];
+}
+function usDopplerMask(title){
+ const lat=usDopplerLaterality(title);
+ const blocks=lat==='bilateral'?[...usDopplerLimbBlocks('direito',true),...usDopplerLimbBlocks('esquerdo',true)]:usDopplerLimbBlocks(lat,false);
+ return {sourceId:US_DOPPLER_MMII_MASK_SOURCE+':'+lat,blocks};
+}
+function isFullUSDopplerMMII(s){return Object.values(US_DOPPLER_MMII_TITLES).includes(s.title)&&s.sourceContract?.scope==='FULL';}
+// Literal unconditional lines from <cranio><canonical_normal> in Guardian 8.5.20.
+// The ischemia-negative line is conditional in the normative source; it must
+// never be automatically emitted. A supported clinical change can add it.
+const CT_CRANIUM_MASK_SOURCE='guardian-runtime-8.5.20.txt:cranio:canonical_normal:unconditional';
+const CT_CRANIUM_MASK_BLOCKS=Object.freeze([
+ 'Não se identificam lesões expansivas intracranianas, coleções extra-axiais ou hemorragias intracranianas.',
+ 'Sistema ventricular com dimensões e morfologia preservadas. Cisternas da base e sulcos corticais sem alterações significativas.',
+ 'Não há desvio das estruturas da linha média.',
+ 'Parênquima encefálico sem alterações significativas da atenuação.',
+ 'Fossa posterior sem alterações tomográficas significativas.',
+ 'Calota craniana sem alterações ósseas significativas nas imagens avaliadas.',
+ 'Seios paranasais e células mastoideas, nas porções incluídas, sem alterações significativas.'
+]);
+function ctCraniumMask(){return {sourceId:CT_CRANIUM_MASK_SOURCE,blocks:[...CT_CRANIUM_MASK_BLOCKS]};}
+// Operational anatomical fallback, not a claim of a previously approved literal mask.
+// Used only when a reviewed canonical mask is unavailable (Guardian fallback_modalidade).
+function ctSinusMask(){return {sourceId:'guardian-8.5.20:seios-da-face:operational-fallback-v1',blocks:[
+ 'Seios maxilares, frontais, esfenoidais e células etmoidais com aeração preservada.',
+ 'Vias de drenagem dos seios paranasais pérvias.',
+ 'Fossas nasais sem obliterações.',
+ 'Septo nasal sem desvio significativo. Conchas nasais sem alterações evidentes.',
+ 'Paredes ósseas dos seios paranasais sem alterações evidentes.'
+]};}
+function isFullCTSinus(s){return s.title==='TOMOGRAFIA COMPUTADORIZADA DOS SEIOS DA FACE'&&s.sourceContract?.scope==='FULL';}
+function isFullCTCranium(s){return s.title==='TOMOGRAFIA COMPUTADORIZADA DO CRÂNIO'&&s.sourceContract?.scope==='FULL';}
+// Approved literal baseline RM-CRANIO-FULL-001 (Lucas, 31/10/2026).
+// The pinned source is references/rm-cranio-full-001.md, not the TC Guardian mask.
+const RM_CRANIUM_MASK_SOURCE='lucas:RM-CRANIO-FULL-001:v1.0';
+const RM_CRANIUM_MASK_BLOCKS=Object.freeze([
+ 'Parênquima encefálico com morfologia e intensidade de sinal preservadas.',
+ 'Ausência de restrição à difusão ou sinais de isquemia recente.',
+ 'Não se observam sinais de hemorragia intracraniana.',
+ 'Sistema ventricular com dimensões e morfologia preservadas.',
+ 'Sulcos corticais e cisternas da base preservados.',
+ 'Estruturas da linha média centradas.',
+ 'Tronco encefálico e cerebelo sem alterações significativas de sinal.',
+ 'Ausência de lesões expansivas ou coleções extra-axiais.',
+ 'Seios paranasais, nas porções incluídas, sem alterações significativas.',
+ 'Células mastoideas aeradas.'
+]);
+function rmCraniumMask(){return {sourceId:RM_CRANIUM_MASK_SOURCE,blocks:[...RM_CRANIUM_MASK_BLOCKS]};}
+function isFullRMCranium(s){return s.title==='RESSONÂNCIA MAGNÉTICA DO CRÂNIO'&&s.sourceContract?.scope==='FULL';}
+// Precompiled operational chest mask: Guardian 8.5.20 torax coverage and
+// preferred airway phrase; no claim of a previously approved literal full mask.
+const CT_CHEST_MASK_SOURCE='guardian-runtime-8.5.20.txt:torax:operational-v1';
+const CT_CHEST_MASK_BLOCKS=Object.freeze([
+ 'Traqueia e brônquios principais pérvios.',
+ 'Parênquima pulmonar sem opacidades focais ou alterações intersticiais evidentes.',
+ 'Ausência de derrame pleural ou pneumotórax.',
+ 'Mediastino e regiões hilares sem massas ou linfonodomegalias.',
+ 'Coração com dimensões preservadas. Ausência de derrame pericárdico.',
+ 'Escore coronariano visual qualitativo: zero.',
+ 'Aorta torácica com calibre preservado.',
+ 'Tronco da artéria pulmonar com calibre preservado.',
+ 'Estruturas ósseas incluídas sem lesões focais evidentes.',
+ 'Partes moles sem coleções.'
+]);
+function ctChestMask(){return {sourceId:CT_CHEST_MASK_SOURCE,blocks:[...CT_CHEST_MASK_BLOCKS]};}
+function isFullCTChest(s){return s.title==='TOMOGRAFIA COMPUTADORIZADA DO TÓRAX'&&s.sourceContract?.scope==='FULL';}
+function validateCompactRISTables(html) {
+ const errors=[];
+ // This checks only actual HTML table tags, never root div width or prose references.
+ const tables=String(html).match(/<table\b[^>]*>[\s\S]*?<\/table>/gi)||[];
+ for(const table of tables){
+  const open=table.match(/^<table\b[^>]*>/i)?.[0]||'';
+  const css=(open.match(/\bstyle\s*=\s*["']([^"']*)["']/i)?.[1]||'').toLowerCase();
+  if(!/\bwidth\s*:\s*auto\s*(?:;|$)/.test(css)||!/\btable-layout\s*:\s*auto\s*(?:;|$)/.test(css)||!/\bborder-collapse\s*:\s*collapse\s*(?:;|$)/.test(css)||/\bwidth\s*:\s*(?:100%|\d+(?:\.\d+)?px)\b/.test(css)||/\bwidth\s*=\s*["']?(?:100%|\d+)/i.test(open))errors.push('ris_table_width');
+  const cells=table.match(/<(?:th|td)\b[^>]*>/gi)||[];
+  if(!cells.length){errors.push('ris_table_cells');continue;}
+  for(const cell of cells){
+   const style=(cell.match(/\bstyle\s*=\s*["']([^"']*)["']/i)?.[1]||'').toLowerCase();
+   if(!/\bpadding\s*:\s*2px\s+6px\s*(?:;|$)/.test(style)||!/\bborder\s*:\s*1px\s+solid\s+#(?:999|999999)\b/.test(style)||/\bbackground(?:-color)?\s*:/.test(style)){errors.push('ris_table_cell_layout');break;}
+   if(!/\bwhite-space\s*:\s*nowrap\s*(?:;|$)/.test(style))errors.push('ris_table_cell_wrap_risk');
+  }
+  const trs=table.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi)||[];
+  const widths=trs.map(tr=>(tr.match(/<(?:th|td)\b/gi)||[]).length);
+  if(widths.length<2||widths.some(w=>w!==widths[0]||w<2||w>3))errors.push('ris_table_column_mismatch');
+ }
+ return [...new Set(errors)];
+}
+function validateRIS(text,{grammaticalUppercase=false}={}) {
+ const errors=[];
+ if(text.split('\n')[0]!=='```html'||!text.endsWith('\n```')) errors.push('fence');
+ const html=text.replace(/^```html\n/,'').replace(/\n```$/,'');
+ errors.push(...validateCompactRISTables(html));
+ const root=html.match(/^<div\b[^>]*>/i)?.[0]||'';
+ if(!/background-color\s*:\s*#ffffff\b/i.test(root)||!/color\s*:\s*#000000\b/i.test(root)) errors.push('preview');
+ if(/font-weight\s*:\s*(?:bold|[6-9]00)/i.test(root)) errors.push('inherited_conclusion_bold');
+ const i=html.search(/CONCLUS[ÃA]O\s*:/i);
+ if(i<0) errors.push('conclusion_missing');
+ else {
+  const after=html.slice(i).replace(/^CONCLUS[ÃA]O\s*:\s*<\/(?:b|strong)>\s*<\/div>/i,'');
+  if(/<(?:b|strong)\b|font-weight\s*:\s*(?:bold|[6-9]00)|\*\*/i.test(after)) errors.push('conclusion_bold');
+ }
+ // Track inherited inline bold across ancestors, not merely tags after heading.
+ const stack=[];let inConclusion=false;
+ for(const token of html.match(/<[^>]+>|[^<]+/g)||[]) {
+  if(token.startsWith('</')){const name=token.match(/^<\/([\w-]+)/)?.[1]?.toLowerCase();const j=stack.findLastIndex(x=>x.name===name);if(j>=0)stack.splice(j);continue;}
+  if(token.startsWith('<')){const name=token.match(/^<([\w-]+)/)?.[1]?.toLowerCase();if(name&&!['br','img','hr','input'].includes(name))stack.push({name,bold:(stack.at(-1)?.bold||false)||['b','strong'].includes(name)||/font-weight\s*:\s*(?:bold|[6-9]00)/i.test(token)});continue;}
+  if(/CONCLUS[ÃA]O\s*:/i.test(token)){inConclusion=true;continue;}
+  if(inConclusion&&token.trim()&&stack.at(-1)?.bold)errors.push('inherited_conclusion_bold');
+ }
+ // Validate visible header contents, including nested inline markup and entities.
+ const visible=html.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;|&#xA0;/gi,' ').replace(/&#(\d+);|&#x([0-9a-f]+);/gi,(_,d,h)=>String.fromCodePoint(parseInt(d||h,d?10:16))).normalize('NFC');
+ const proper=new Set(['Chagas','Parkinson','Alzheimer','Crohn','Hodgkin','Doppler','Budd','Chiari','Swyer','James','MacLeod']);
+ for(const [label,code] of [['INDICAÇÃO','indication_case'],['TÉCNICA','technique_case'],['COMPARAÇÃO','comparison_case']]){
+  const content=visible.match(new RegExp(label+'\\s*:\\s*([^]*?)(?=INDICAÇÃO\\s*:|TÉCNICA\\s*:|COMPARAÇÃO\\s*:|ANÁLISE\\s*:|CONCLUSÃO\\s*:|$)','i'))?.[1]?.trim();
+  const first=content?.match(/^[\s"'“‘(]*([\p{L}\p{M}]+)/u)?.[1];
+  if(!first||label==='INDICAÇÃO'&&grammaticalUppercase)continue;
+  const acronym=/^\p{Lu}{2,}$/u.test(first);
+  if(/^\p{Lu}\p{Ll}/u.test(first)&&!acronym&&!proper.has(first))errors.push(code);
+ }
+ return errors;
+}
+function validateHostDeliveryBoundary(claim={}) {
+ const errors=[];
+ if(claim.claimsByteIdentity===true&&claim.emittedBytes!==claim.observedDeliveredBytes)errors.push('post_send_byte_mismatch');
+ if(claim.claimsHostFixed===true&&claim.hostEndToEndVerified!==true)errors.push('host_fix_unverified');
+ if(claim.claimsNativeChatIntegration===true&&claim.appToolResourceWired!==true)errors.push('native_integration_unwired');
+ if(claim.postSendMutationDetected===true&&claim.packageCanRepairHostMutation===true)errors.push('package_cannot_repair_host_mutation');
+ return errors;
+}
+function validateClinicalReplyPriority(plan={}) {
+ const errors=[];
+ if(plan.clinicalFollowup!==true)return errors;
+ if(plan.directClinicalResponse!==true)errors.push('clinical_reply_missing');
+ if(plan.maintenanceBeforeClinical===true)errors.push('maintenance_preempted_clinical_reply');
+ if(plan.reportChanged===true&&plan.completeCorrectedReportFirst!==true)errors.push('complete_corrected_report_missing');
+ return errors;
+}
+function validateImplicitRouting(plan={}) {
+ const errors=[];
+ if(plan.radiologyTask===true&&plan.ownerLoadedBeforeClinical!==true)errors.push('implicit_owner_route_missing');
+ if(plan.radiologyTask===true&&plan.memoryOnlySource===true)errors.push('memory_only_owner_absent');
+ if(plan.radiologyTask===true&&plan.requiresMention===true)errors.push('mention_requirement_forbidden');
+ if(plan.claimsLoaded===true&&plan.hostExecutionEvidence!==true)errors.push('host_evidence_missing');
+ return errors;
+}
+function validateReleaseClaim(claim={}) {
+ const errors=[];
+ if(claim.claimsReleaseState!==true)return errors;
+ if(claim.liveMetadataRead!==true)errors.push('release_live_evidence_missing');
+ if(claim.readbackVerified!==true)errors.push('release_readback_missing');
+ if(claim.evidenceFromPriorAttempt===true)errors.push('prior_attempt_not_current');
+ if(claim.claimedVersion!==claim.liveVersion)errors.push('release_version_mismatch');
+ if(claim.claimedReleaseId!==claim.liveReleaseId)errors.push('release_id_mismatch');
+ return errors;
+}
+function validateBaselineSpecificity(text) {
+ const plain=String(text).replace(/<[^>]*>/g," ").normalize("NFC").toLocaleLowerCase("pt-BR").replace(/\s+/g," ");
+ return (plain.match(/sem alterações tomográficas significativas/g)||[]).length>=2 ? ["BASELINE_GENERIC_BOILERPLATE_REGRESSION"] : [];
+}
+// Explicit structured context scopes the check; no diagnosis or recommendation is inferred.
+const norm=s=>String(s||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+function validateBladderMRIRecommendation(text,context={}) {
+ if(context.bladderMRIRecommended!==true||context.suspectedBladderNeoplasm!==true)return [];
+ const t=norm(text),e=[];
+ if(!/ressonancia|\brm\b/.test(t))e.push('missing_mri_recommendation');
+ if(!/pelve|pelvica/.test(t))e.push('missing_pelvic_region');
+ if(!/multiparametric/.test(t))e.push('missing_multiparametric_protocol');
+ if(!/(?:dedicad[oa].{0,25}bexiga|protocolo.{0,25}vesical)/.test(t))e.push('missing_bladder_protocol');
+ const iv=/(?:com (?:administracao de )?contraste (?:intravenoso|endovenoso)|com (?:administracao de )?(?:meio de )?contraste (?:intravenoso|endovenoso))/.test(t);
+ if(context.ivContrastContraindicated===true){if(iv)e.push('contraindicated_iv_recommendation');if(!/sem (?:administracao de )?(?:meio de )?contraste|contraindicacao/.test(t))e.push('contraindication_not_acknowledged');}
+ else if(!iv)e.push('missing_iv_contrast');
+ return e;
+}
+
+// Maintenance replay of the final message. Does not intercept Chat output.
+function validateFullRIS(text,context={}){
+ const errors=[...validateDeliveryLexicon(text),...validateRIS(text),...validateVisibility(text),...validateBladderMRIRecommendation(context.recommendationText,context)];
+ if(/<div\b[^>]*\sid\s*=/i.test(text))errors.push('unexpected_div_id');
+ const indicationBlock=String(text).split(/<b>INDICAÇÃO:<\/b>/i)[1]?.split(/<b>TÉCNICA:<\/b>/i)[0]||'';
+ if(/\binterroga\b/i.test(indicationBlock))errors.push('indication_interroga_residual');
+ const lines=String(text).split('\n');
+ if(lines.some(l=>!l.trim()))errors.push('blank_line');
+ const root=lines[1]||'';
+ for(const css of ['font-family: Arial','font-size: 11pt','text-align: justify','color: #000000','background-color: #ffffff','width: 100%'])if(!root.includes(css))errors.push('root_contract');
+ if(/min-height\s*:/i.test(root))errors.push('root_min_height');
+ if(!/^<div\b[^>]*text-align:\s*center[^>]*font-size:\s*14pt[^>]*><b>[^<]+<\/b><\/div>$/.test(lines[2]||''))errors.push('title');
+ const names=['INDICAÇÃO','TÉCNICA','COMPARAÇÃO','ANÁLISE','CONCLUSÃO'];
+ const ix=names.map(n=>lines.findIndex(l=>l.includes('<b>'+n+':</b>')));
+ if(ix.some(i=>i<0)||ix.some((i,j)=>j&&i<=ix[j-1]))errors.push('section_order');
+ for(const n of names)if(lines.filter(l=>l.includes('<b>'+n+':</b>')).length!==1)errors.push('section_count');
+ const gap=(i,wanted)=>{if(i<0||lines[i-1]!==wanted)errors.push('spacing');};
+ gap(ix[0],'<br><br><br>');gap(ix[1],'<br>');gap(ix[2],'<br>');gap(ix[3],'<br><br><br>');gap(ix[4],'<br><br><br>');
+ for(const i of [ix[3],ix[4]])if(i>=0&&lines[i+1]!=='<br>')errors.push('heading_spacing');
+ const hack='<span style="display:inline-block; min-width:100%; width:100%; font-size:1px; line-height:1px;">&#8203;</span>';
+ if(!String(text).endsWith(hack+'\n</div>\n```'))errors.push('final_hack');
+ if(!lines.at(-3)?.endsWith('</div>'+hack))errors.push('final_hack_line_binding');
+ const analysis=ix[3]>=0&&ix[4]>ix[3]?lines.slice(ix[3]+2,ix[4]-1):[];
+ errors.push(...validateBaselineSpecificity(analysis.join(' ')));
+if(!analysis.length||!analysis.some(l=>/^<div\b/.test(l)))errors.push('analysis_missing');
+ const conclusion=ix[4]>=0?lines.slice(ix[4]+2,-2):[];
+ if(!conclusion.length)errors.push('conclusion_empty');
+ conclusion.forEach((l,i)=>{if(i%2===1){if(l!=='<br>')errors.push('conclusion_spacing');}else if(!/^<div\b[^>]*>- [^<]+<\/div>/.test(l))errors.push('conclusion_item');});
+ // SOS 2026-11-08: independent final-HTML measurement guard.
+ // The source-state gate alone is insufficient if a revised RIS is assembled
+ // after render. Check the literal CONCLUSÃO span, not the entire report.
+ for(const line of conclusion){
+  if(!/^<div\b/.test(line))continue;
+  const item=line.replace(/<[^>]*>/g,'');
+  if(/\b\d+(?:[.,]\d+)?\s*(?:mm|cm|ml|litros?|milimetros?|centimetros?)\b/i.test(norm(item)))errors.push('conclusion_measurement');
+ }
+
+ for(const l of lines.filter(l=>/^<div\b/.test(l)&&l!==root&&l!=='</div>'))if(!/color:\s*#000000/.test(l))errors.push('block_color');
+ return [...new Set(errors)];
+}
+
+// Source visibility guard only; does not inspect host CSS or clipboard permissions.
+function validateVisibility(text){
+ const errors=[];
+ for(const tag of String(text).match(/<[^>]+>/g)||[]){
+  if(/\shidden(?:\s|=|>)/i.test(tag))errors.push('hidden_content');
+  const style=tag.match(/\bstyle=["']([^"']*)["']/i)?.[1]||'';
+  for(const declaration of style.split(';')){
+   const colon=declaration.indexOf(':');if(colon<0)continue;
+   const key=declaration.slice(0,colon).trim().toLowerCase();
+   const value=declaration.slice(colon+1).replace(/!important/ig,'').trim().toLowerCase();
+   if((key==='display'&&value==='none')||(key==='visibility'&&['hidden','collapse'].includes(value))||(key==='opacity'&&Number(value)===0))errors.push('hidden_content');
+   if(['user-select','-webkit-user-select'].includes(key)&&value==='none')errors.push('unselectable_content');
+   if(key==='color'&&!['#000000','#000','black','rgb(0, 0, 0)'].includes(value))errors.push('text_color_conflict');
+   if(['background','background-color'].includes(key)&&!['#ffffff','#fff','white','rgb(255, 255, 255)'].includes(value))errors.push('background_conflict');
+  }
+ }
+ return [...new Set(errors)];
+}
+const esc=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+const div=s=>'<div style="text-align: justify; color: #000000;">'+s+'</div>';
+// A standalone subtitle boolean is not evidence that the exam was elective.
+// Lock the real compiler path, not merely the synthetic urgency test.
+function validateUrgencySubtitleState(s){
+ const title=norm(s.title),c=s.sourceContract||{},errors=[];
+ const isMRI=/ressonancia|\brm\b|colangiorressonancia/.test(title);
+ const isNonMRI=/tomografia|\btc\b|ultrasson|\busg?\b|doppler|radiografia|\brx\b|mamografia|densitometria/.test(title)&&!isMRI;
+ const exception=['elective','ambulatory','nonurgent'].includes(c.urgencyDisposition);
+ const evidence=typeof c.urgencyDispositionEvidence==='string'&&c.urgencyDispositionEvidence.trim().length>0;
+ if(c.urgencyDisposition!==undefined&&!['elective','ambulatory','nonurgent','urgent'].includes(c.urgencyDisposition))errors.push('invalid_urgency_disposition');
+ if(exception&&!evidence)errors.push('urgency_exception_without_evidence');
+ if(isNonMRI){
+  if(s.urgent_subtitle===false&&!(exception&&evidence))errors.push('non_mri_urgency_subtitle_missing');
+  if(s.urgent_subtitle===true&&exception&&evidence)errors.push('elective_urgency_subtitle_unjustified');
+ }
+ if(isMRI){
+  if(s.urgent_subtitle===true&&!(c.explicitUrgency===true&&typeof c.explicitUrgencyEvidence==='string'&&c.explicitUrgencyEvidence.trim()))errors.push('mri_urgency_without_explicit_evidence');
+  if(s.urgent_subtitle===false&&c.explicitUrgency===true)errors.push('mri_explicit_urgency_subtitle_missing');
+ }
+ return errors;
+}
+function compileAnalysisTables(tables){
+ if(!Array.isArray(tables))throw Error('invalid analysis tables');
+ return tables.map(table=>{
+  const headers=table?.headers,lines=table?.rows;
+  if(!Array.isArray(headers)||headers.length<2||headers.length>3||!Array.isArray(lines)||!lines.length||lines.length>50)throw Error('invalid analysis table');
+  const valid=x=>typeof x==='string'&&x.trim()&&!/[\r\n]/.test(x);
+  if(!headers.every(valid)||lines.some(line=>!Array.isArray(line)||line.length!==headers.length||!line.every(valid)))throw Error('invalid analysis table cells');
+  const cellStyle='border: 1px solid #999999; padding: 2px 6px; white-space: nowrap; text-align: left; color: #000000;';
+  const row=(cells,tag)=>'<tr>'+cells.map(c=>'<'+tag+' style="'+cellStyle+'">'+esc(c)+'</'+tag+'>').join('')+'</tr>';
+  return '<table style="width: auto; table-layout: auto; border-collapse: collapse; font-family: Arial; font-size: 11pt; color: #000000;">'+row(headers,'th')+lines.map(line=>row(line,'td')).join('')+'</table>';
+ });
+}
+function compileReport(s){
+ for(const k of ['title','indication','technique','comparison'])if(typeof s[k]!=='string'||!s[k].trim()||/[\r\n]/.test(s[k]))throw Error('invalid '+k);
+ if(!Array.isArray(s.analysis)||!s.analysis.length||!Array.isArray(s.conclusion)||!s.conclusion.length||typeof s.urgent_subtitle!=='boolean')throw Error('incomplete report state');
+ const subtitleErrors=validateUrgencySubtitleState(s);if(subtitleErrors.length)throw Error(subtitleErrors.join(','));
+ const rendered=[];
+ for(const b of s.analysis){
+  if(typeof b.text==='string'&&/<\/?(?:table|tr|td|th)\b/i.test(b.text))throw Error('structured_analysis_table_required');
+  if(typeof b.text!=='string'||!b.text.trim()||/[\r\n]/.test(b.text)||typeof b.positive!=='boolean'||!Array.isArray(b.highlights))throw Error('invalid analysis block');
+  if(b.positive&&!b.highlights.length)throw Error('positive finding requires highlight');
+  if(!b.positive&&b.highlights.length)throw Error('normal block cannot be highlighted');
+  const ranges=[];
+  for(const t of b.highlights){if(typeof t!=='string'||!t.length)throw Error('invalid highlight');const i=b.text.indexOf(t);if(i<0||b.text.indexOf(t,i+1)>=0)throw Error('highlight must bind uniquely');ranges.push([i,i+t.length]);}
+  ranges.sort((a,b)=>a[0]-b[0]);let offset=0,out='';
+  for(const [a,z] of ranges){if(a<offset)throw Error('overlapping highlights');out+=esc(b.text.slice(offset,a))+'<b>'+esc(b.text.slice(a,z))+'</b>';offset=z;}
+  rendered.push(div(out+esc(b.text.slice(offset))));
+ }
+ for(const t of s.conclusion)if(typeof t!=='string'||!t.trim()||/[\r\n]/.test(t)||/^[-–—•]/.test(t))throw Error('invalid conclusion item');
+ const rows=['```html','<div style="font-family: Arial; font-size: 11pt; text-align: justify; color: #000000; background-color: #ffffff; width: 100%;">','<div style="text-align: center; font-size: 14pt; color: #000000;"><b>'+esc(s.title)+'</b></div>'];
+ if(s.urgent_subtitle)rows.push('<div style="text-align: center; color: #000000;"><i>Relatório de Urgência/Emergência</i></div>');
+ rows.push('<br><br><br>',div('<b>INDICAÇÃO:</b> '+esc(s.indication)),'<br>',div('<b>TÉCNICA:</b> '+esc(s.technique)),'<br>',div('<b>COMPARAÇÃO:</b> '+esc(s.comparison)),'<br><br><br>',div('<b>ANÁLISE:</b>'),'<br>');
+ const tables=compileAnalysisTables(s.analysisTables||[]);
+ for(const t of s.analysisTables||[])if(t.afterAnalysisIndex!==undefined&&(!Number.isInteger(t.afterAnalysisIndex)||t.afterAnalysisIndex<0||t.afterAnalysisIndex>=rendered.length))throw Error('invalid analysis table position');
+ rendered.forEach((t,i)=>{if(i)rows.push('<br>');rows.push(t);tables.forEach((table,j)=>{if((s.analysisTables[j].afterAnalysisIndex??rendered.length-1)===i)rows.push('<br>',table);});});
+ rows.push('<br><br><br>',div('<b>CONCLUSÃO:</b>'),'<br>');
+ s.conclusion.forEach((t,i)=>{if(i)rows.push('<br>');rows.push(div('- '+esc(t)));});
+ rows[rows.length-1]+='<span style="display:inline-block; min-width:100%; width:100%; font-size:1px; line-height:1px;">&#8203;</span>';
+ rows.push('</div>','```');
+ // Private compiler: the public render boundary validates these exact bytes once.
+ return rows.join('\n');
+}
+
+function validateAfternoonContext(state){
+ const c=state.context||{},errors=[];
+ if(c.incidentalMetalFragments===true && c.metalClinicallyRelevant!==true && c.metalExamFocus!==true && state.conclusion.some(t=>/fragmentos? met[aá]licos?/i.test(t)))errors.push('incidental_metal_conclusion');
+ // RL-006: caller classifies incidental cysts; the core enforces placement without inferring clinical relevance.
+ if(c.incidentalRenalCyst===true && c.renalCystClinicallyRelevant!==true && c.renalCystExamFocus!==true && state.conclusion.some(t=>/cisto(?:s)?\s+(?:renal|renais)|cisto(?:s)?\s+nos rins/i.test(t)))errors.push('RL006_INCIDENTAL_RENAL_CYST_CONCLUSION');
+ if(c.incidentalHepaticCyst===true && c.hepaticCystClinicallyRelevant!==true && c.hepaticCystExamFocus!==true && state.conclusion.some(t=>/cisto(?:s)?\s+(?:hep[aá]tic[oa]s?|no fígado)|cisto(?:s)?\s+hepatic/i.test(t)))errors.push('RL006_INCIDENTAL_CYST_CONCLUSION');
+ // RL-042: caller-classified small incidental adnexal cysts stay in ANALYSIS.
+ if(c.incidentalAdnexalCysts===true && c.adnexalCystsClinicallyRelevant!==true && c.adnexalCystsExamFocus!==true && state.conclusion.some(t=>/(?:cistos?|imagens? c[ií]sticas?|forma(?:ç|c)[õo]es? c[ií]sticas?)[^.;]{0,70}(?:anexiais?|ovariana?s?|ov[aá]rios?)|(?:anexiais?|ovariana?s?|ov[aá]rios?)[^.;]{0,70}(?:cistos?|imagens? c[ií]sticas?)/i.test(t)))errors.push('RL042_INCIDENTAL_ADNEXAL_CYST_CONCLUSION');
+ const all=[...state.analysis.map(b=>b.text),...(state.analysisTables||[]).flatMap(t=>(t.rows||[]).map(r=>r.join(' '))),...state.conclusion].join(' ');
+ if(c.obstetric===true){
+  if(typeof c.providedGestationalAge==='string' && c.providedGestationalAge.trim() && !all.includes(c.providedGestationalAge))errors.push('provided_gestational_age_missing');
+  if(Array.isArray(c.providedDopplerTokens) && c.providedDopplerTokens.some(t=>!all.includes(t)))errors.push('provided_doppler_data_missing');
+  if(c.dopplerClassificationSupported===false && c.dopplerClassified===true)errors.push('unsupported_doppler_classification');
+  if(c.recommendationSupported===false && c.recommendationAdded===true)errors.push('unsupported_obstetric_recommendation');
+ }
+ return errors;
+}
+// RL-010: only clinically correlated groups explicitly selected by the caller are checked.
+// This structural gate cannot infer that an effusion is malignant or ipsilateral.
+function validateCorrelatedFindingGroups(state){
+ const groups=state.context?.relatedFindingGroups;
+ if(groups===undefined)return [];
+ if(!Array.isArray(groups))return ['invalid_related_finding_groups'];
+ const errors=[];
+ const hasTerms=(text,terms)=>terms.every(term=>text.toLocaleLowerCase('pt-BR').includes(term.toLocaleLowerCase('pt-BR')));
+ for(const group of groups){
+  if(!group||!Array.isArray(group.analysisTerms)||!Array.isArray(group.conclusionTerms)||group.analysisTerms.length<2||group.conclusionTerms.length<2||[...group.analysisTerms,...group.conclusionTerms].some(term=>typeof term!=='string'||!term.trim())){
+   errors.push('invalid_related_finding_group');continue;
+  }
+  if(!state.analysis.some(block=>hasTerms(block.text,group.analysisTerms)))errors.push('related_analysis_not_integrated');
+  if(!state.conclusion.some(item=>hasTerms(item,group.conclusionTerms)))errors.push('related_conclusion_not_integrated');
+ }
+ return [...new Set(errors)];
+}
+// RL-030: the caller must select a clinically justified second-order inference.
+// The gate checks that selection survives the RIS projection; it does not infer
+// diagnoses, decide that interpretation is required, or assess medical validity.
+function validateReasoningContract(state){
+ const r=state.sourceContract?.reasoningContract;
+ if(r===undefined)return [];
+ if(!r||r.required!==true||!Array.isArray(r.findingAnchors)||!r.findingAnchors.length||!Array.isArray(r.interpretationAnchors)||!r.interpretationAnchors.length||typeof r.basis!=='string'||!r.basis.trim()||[...r.findingAnchors,...r.interpretationAnchors].some(x=>typeof x!=='string'||!x.trim()))return ['reasoning_contract_invalid'];
+ const clean=s=>norm(s).replace(/\s+/g,' ').trim();
+ const analysis=clean((state.analysis||[]).map(b=>b.text).join(' '));
+ const conclusion=clean((state.conclusion||[]).join(' '));
+ const errors=[];
+ if(r.findingAnchors.some(x=>!analysis.includes(clean(x))))errors.push('reasoning_finding_unbound');
+ if(r.interpretationAnchors.some(x=>!conclusion.includes(clean(x))))errors.push('reasoning_interpretation_missing');
+ return errors;
+}
+// RL-031: only a verified local resource restriction blocks the recommendation.
+// Other examinations and facilities with confirmed ocular ultrasound availability
+// are not affected by this operational gate.
+function validateLocalRecommendationFeasibility(state){
+ if(state.context?.ocularUltrasoundUnavailable!==true)return [];
+ const conclusion=norm((state.conclusion||[]).join(' '));
+ const ocularUltrasound=/(?:ultrassonografia|ultrassom|ecografia|usg)\s+(?:(?:dos?|das?)\s+)?(?:ocular(?:es)?|orbit(?:a|as)|globo(?:s)?\s+ocular(?:es)?)/;
+ return ocularUltrasound.test(conclusion)?['local_unsupported_ocular_ultrasound_recommendation']:[];
+}
+function validateSourceContract(state){
+ const c=state.sourceContract,errors=[];
+ if(!c||typeof c.indication!=='string'||!c.indication.trim()||!Array.isArray(c.analysisAnchors)||!Array.isArray(c.forbiddenAnalysis))return ['source_contract_required'];
+ if(!['FULL','PARTIAL'].includes(c.scope))errors.push('clinical_scope_required');
+ const clean=s=>norm(s).replace(/\s+/g,' ').trim();
+ if(clean(state.indication)!==clean(c.indication))errors.push('source_indication_changed');
+ const analysis=clean([...(state.analysis||[]).map(b=>b.text),...(state.analysisTables||[]).flatMap(t=>(t.rows||[]).map(r=>r.join(' ')))].join(' '));
+ for(const anchor of c.analysisAnchors){
+  if(typeof anchor!=='string'||!anchor.trim())errors.push('invalid_source_anchor');
+  else if(!analysis.includes(clean(anchor)))errors.push('source_analysis_anchor_missing');
+ }
+ for(const phrase of c.forbiddenAnalysis){
+  if(typeof phrase!=='string'||!phrase.trim())errors.push('invalid_source_exclusion');
+  else if(analysis.includes(clean(phrase)))errors.push('source_analysis_contradiction');
+ }
+ const excluded=c.forbiddenConclusion??[];
+ if(!Array.isArray(excluded))errors.push('invalid_conclusion_exclusions');
+ else for(const phrase of excluded){
+  if(typeof phrase!=='string'||!phrase.trim())errors.push('invalid_conclusion_exclusion');
+  else if(clean((state.conclusion||[]).join(' ')).includes(clean(phrase)))errors.push('source_conclusion_contradiction');
+ }
+ return [...new Set(errors)];
+}
+// RL-015 / REG-NO-POSITIVE-INVENTION-001: IV contrast is a patient-specific
+// acquisition attribute, not an inference from a suspicious image or the exam.
+// This structural gate depends on honest caller provenance; it cannot inspect
+// the original dictation or intercept another renderer's output.
+function validateCTContrastProvenance(state){
+ if(!/tomografia/.test(norm(state.title||'')))return [];
+ const c=state.sourceContract||{},t=norm(state.technique||''),errors=[];
+ const withIV=/\bcom\s+(?:administracao\s+(?:(?:intravenosa|endovenosa)\s+)?de\s+)?(?:meio\s+de\s+)?contraste\b|\bcom\s+administracao\s+(?:intravenosa|endovenosa)\s+de\s+meio\s+de\s+contraste\b|\bapos\s+(?:a\s+)?administracao.{0,70}\bcontraste\b|\bpos-contraste\b/.test(t);
+ const evidence=norm(c.ivContrastEvidence||'').trim();
+ const deniedIV=/\bsem\s+(?:(?:administracao|uso)\s+de\s+)?(?:meio\s+de\s+)?contraste\b(?!\s+(?:oral|retal|enteral)\b)|\bnao\s+(?:(?:foi|houve|se)\s+)?(?:administrad[oa]|utilizad[oa]|realizad[oa]|feito|usad[oa]|administracao|uso)[^.;]{0,35}\bcontraste\b(?!\s+(?:oral|retal|enteral)\b)/.test(evidence);
+ if(c.ivContrastExplicit===true&&deniedIV)errors.push('ct_iv_contrast_evidence_negated');
+ // An enteral-only mention is not evidence of intravenous administration.
+ // Preserve established shorthand ("com contraste", "sem e após contraste")
+ // and mixed routes when intravenous administration is actually stated.
+ const contrastEvidence=evidence.replace(/\bcontraste\s+(?:oral|retal|enteral)\b/g,'');
+ const supportsIV=/\bcontraste\b|\biodad/.test(contrastEvidence)||/\bcontraste\b[^.;]{0,60}\b(?:intravenoso|endovenoso|iv|ev)\b/.test(evidence);
+ if(withIV && (c.ivContrastExplicit!==true||!supportsIV))errors.push('ct_iv_contrast_without_dictation_evidence');
+ if(c.ivContrastExplicit===true && !withIV)errors.push('ct_iv_contrast_source_technique_mismatch');
+ const clinical=norm([...(state.analysis||[]).map(b=>b.text),(state.conclusion||[]).join(' ')].join(' '));
+ if(!withIV && /\brealce\b|\bpos-contraste\b|\bfase (?:tardia|excretora)\b|\bconcentracao e eliminacao (?:do (?:meio de )?)?contraste\b/.test(clinical))errors.push('ct_contrast_dependent_claim_without_iv');
+ return [...new Set(errors)];
+}
+// COMPARAÇÃO identifies prior studies only. Their findings and interval
+// interpretation belong in ANÁLISE, not the bibliographic identification line.
+function validateComparisonIdentityOnly(state){
+ const s=norm(state.comparison||'');
+ const finding=/\b(?:calculo|litias|hidronefr|dilat|lesao|lesoes|massa|tumor|nodul|cist|colec|hematom|hemorrag|esten|tromb|derram|infiltrad|espessament|obstruc|anastomos|alterac|achad|formac|descrev|descrit|evidenci|demonstr|mostr|apresentav|observad|identificad|aument|regred|persist|reduz|desaparec|evolu)[a-z]*\b/;
+ if(finding.test(s))return ['comparison_finding_must_be_in_analysis'];
+ const narrative=/(?:\b(?:que|a qual|o qual|onde)\b.{0,40}\b(?:havia|tinha|foi|era|estava)\b|\b(?:em relacao|diferente do|nao se via|anteriormente visto)\b)/;
+ return narrative.test(s)?['comparison_narrative_must_be_in_analysis']:[];
+}
+// An intrauterine device described as being in the uterus adds no localization.
+// Keep uncertain endometrial localization explicit, without promoting certainty.
+function validateDeviceLocalizationTautology(state){
+ const s=norm((state.analysis||[]).map(b=>b.text).join(' '));
+ const errors=[];
+ if(/\bdispositivo intrauterino\s+em\s+(?:topografia|localizacao)\s+uterina\b/.test(s))errors.push('diu_uterine_localization_tautology');
+ if(/\b(?:diu|dispositivo intrauterino)\b[^.;]{0,120}\bcavidade endometrial\b|\bcavidade endometrial\b[^.;]{0,120}\b(?:diu|dispositivo intrauterino)\b/.test(s))errors.push('diu_endometrial_cavity_terminology_disallowed');
+ return errors;
+}
+function validateFullCompartments(state){
+ const title=norm(state.title),scope=state.sourceContract?.scope;
+ const chest=/(?:tomografia|\btc\b)/.test(title)&&/torax/.test(title);
+ const abdomen=/(?:tomografia|\btc\b)/.test(title)&&/abdom/.test(title)&&/pelve/.test(title);
+ const cranium=/(?:tomografia|\btc\b)/.test(title)&&/cranio/.test(title);
+ const shoulder=/ultrasson|\bus\b/.test(title)&&/ombro/.test(title);
+ const dopplerMMII=Object.values(US_DOPPLER_MMII_TITLES).includes(state.title);
+ if(!chest&&!abdomen&&!cranium&&!shoulder&&!dopplerMMII)return [];
+ if(!['FULL','PARTIAL'].includes(scope))return ['clinical_scope_required'];
+ if(scope==='PARTIAL')return [];
+ const text=norm((state.analysis||[]).map(b=>b.text).join(' ')),errors=[];
+ const need=(label,pattern)=>{if(!pattern.test(text))errors.push('full_mask_missing_'+label);};
+ if(chest){
+  for(const [label,pattern] of [['traqueia',/traque/],['bronquios',/bronqui/],['pulmoes',/pulmoes|parenquima pulmonar|pulmonares/],['pleuras',/pleur/],['mediastino',/mediastin/],['hilos',/hilos?|hilares?/],['coracao',/coracao|cardiac/],['pericardio',/pericard/],['coronarias',/coronar/],['aorta',/aorta|aortic/],['arteria_pulmonar',/arteria pulmonar|tronco (?:da arteria )?pulmonar/],['ossos',/osse|ossos|esquelet/],['partes_moles',/partes moles/]])need(label,pattern);
+ }
+ if(abdomen){
+  for(const [label,pattern] of [['figado',/figado|hepatic/],['vesicula',/vesicul|colecistectomia/],['vias_biliares',/biliar|coledoco/],['pancreas',/pancrea/],['baco',/baco/],['adrenais',/adrena|suprarren/],['intestino',/alcas|intestin|colon/],['regiao_periapendicular',/apendic/],['bexiga',/bexig/],['vasos',/aorta|vasos/],['linfonodos',/linfonod/],['liquido_livre',/liquido livre|ascite/],['ossos',/osse|ossos|esquelet/]])need(label,pattern);
+  if(!/\brins\b/.test(text)&&!(/rim direito/.test(text)&&/rim esquerdo/.test(text)))errors.push('full_mask_missing_rins_bilaterais');
+  need('ureteres',/ureter/);
+ }
+ if(dopplerMMII){
+  // Cobertura exigida POR MEMBRO: um achado positivo em um lado não pode apagar o outro nem o restante do mesmo lado.
+  const lat=usDopplerLaterality(state.title);
+  const blocks=(state.analysis||[]).map(b=>norm(b.text));
+  for(const side of (lat==='bilateral'?['direito','esquerdo']:[lat])){
+   const t=lat==='bilateral'?blocks.filter(b=>b.includes('membro inferior '+side)).join(' '):blocks.join(' ');
+   if(lat==='bilateral'&&!t){errors.push('full_mask_missing_membro_'+side);continue;}
+   for(const [label,pattern] of [['femorais',/femora/],['poplitea',/poplite/],['tibiais',/tibia/],['fibulares',/fibular/],['musculares_panturrilha',/gastrocnemi|solear|muscular/],['safena_magna',/safena magna/],['safena_parva',/safena parva/],['femoral_profunda',/profunda/],['femoral_superficial',/superficial/]])if(!pattern.test(t))errors.push('full_mask_missing_'+label+'_'+side);
+  }
+ }
+ if(cranium){
+  for(const [label,pattern] of [
+   ['parenquima',/parenquima encefalico|parenquima cerebral|substancia (?:branca|cinzenta)|hemisferios cerebrais/],
+   ['hemorragia',/hemorrag|sangramento|hematoma/],
+   ['lesao_expansiva',/expansiv|massa intracraniana|lesao focal/],
+   ['colecoes_extra_axiais',/extra-axia|subdural|epidural|colec(?:ao|oes)/],
+   ['ventriculos',/ventricul/],
+   ['cisternas',/cistern/],
+   ['sulcos',/sulc|espacos subaracn/],
+   ['linha_media',/linha media|estruturas medianas|estruturas da linha media/],
+   ['fossa_posterior',/fossa posterior|cerebel|tronco encefal|ponte|bulbo/],
+   ['calota',/calota|ossos cranianos|estruturas osseas cranianas/],
+   ['seios_paranasais',/seios paranasais|seios maxilares|seio maxilar|seios etmoid|seios esfenoid|seios frontais/],
+   ['mastoides',/mastoide/]
+  ])need('cranio_'+label,pattern);
+ }
+ if(shoulder){
+  for(const [label,pattern] of [['biceps',/biceps/],['supraespinal',/supraespin/],['infraespinal',/infraespin/],['subescapular',/subescapul/],['redondo_menor',/redondo menor/],['bursa',/burs/],['acromioclavicular',/acromioclavicul/],['glenoumeral',/glenoumer/],['musculos',/muscul/]])need(label,pattern);
+ }
+ return errors;
+}
+// RL-032 strengthens the existing FULL mask rule for a common transvaginal
+// regression: naming a corpus luteum or cyst must not erase description of
+// the involved ovary. Abnormal attributes are valid; no normality is inferred.
+function validateTransvaginalOvaryDescription(state){
+ if(state.sourceContract?.scope!=='FULL'||!/ultrasson/.test(norm(state.title||''))||!/transvaginal/.test(norm(state.title||'')))return [];
+ const errors=[];
+ for(const block of state.analysis||[]){
+  if(block.positive!==true)continue;
+  const t=norm(block.text);
+  if(!/\bovario (?:direito|esquerdo)\b/.test(t)||!/(?:cisto|corpo luteo|nodulo|massa|lesao|folicul)/.test(t))continue;
+  const limited=/(?:avaliacao (?:limitada|prejudicada)|nao (?:individualizad|avaliav|caracteriz|mensurav)|parenquima nao visivel)/.test(t);
+  const dimensions=/(?:dimens|volum|tamanho)/.test(t);
+  const contour=/contorn/.test(t);
+  const parenchyma=/(?:parenquim|ecotextur|textur)/.test(t);
+  if(!limited&&!(dimensions&&contour&&parenchyma))errors.push('RL032_OVARIAN_BASELINE_MISSING');
+ }
+ return [...new Set(errors)];
+}
+// RL-034: physiological postmenopausal ovarian involution must not be
+// pathologized solely because an ovary has a small measured volume.
+// Age/menopausal status comes from the active case, never an inferred template.
+// An explicitly evidenced individual size abnormality remains reportable.
+function validateAgeAwareOvarianSize(state){
+ if(!/ultrasson/.test(norm(state.title||''))||!/transvaginal/.test(norm(state.title||'')))return [];
+ const c=state.sourceContract||{};
+ const age=c.patientAgeYears;
+ const isPostmenopausal=c.menopausalStatus==='postmenopausal'||Number.isFinite(age)&&age>=60;
+ if(!isPostmenopausal)return [];
+ const supported=c.ovarianSizeAbnormalityExplicit===true&&typeof c.ovarianSizeAbnormalityEvidence==='string'&&c.ovarianSizeAbnormalityEvidence.trim().length>0;
+ if(supported)return [];
+ for(const block of state.analysis||[]){
+  for(const sentence of String(block.text||'').split(/[.;]/)){
+   const t=norm(sentence);
+   if(!/\bovari(?:o|os|ana|anas)\b/.test(t))continue;
+   if(/\b(?:dimensoes? reduzidas?|volumes? reduzidos?|tamanhos? reduzidos?|dimensoes? diminuidas?|pequen[oa]s? dimensoes?|ovarios? pequen[oa]s?|atrofi(?:a|co|ca|cos|cas|ad[oa]s?))\b/.test(t))return ['RL034_POSTMENOPAUSAL_OVARIAN_SIZE_PATHOLOGIZED'];
+  }
+ }
+ return [];
+}
+// RL-011: colangiorressonância is a targeted biliopancreatic study, not a full
+// abdominal MRI mask. Clinical relevance of an incidental organ must be
+// supplied explicitly by the caller; this structural gate cannot infer it.
+function validateColangioScope(state){
+ if(!/colangio/.test(norm(state.title)))return [];
+ if(state.sourceContract?.scope==='PARTIAL')return [];
+ if(isCombinedAbdomenMRI(state))return validateCombinedAbdomenMRI(state);
+ const errors=[],blocks=state.analysis||[];
+ const body=norm(blocks.map(b=>b.text).join(' '));
+ for(const [name,pattern] of [
+  ['vesicula',/vesicul/],
+  ['vias_biliares',/vias biliares|ductos biliares/],
+  ['coledoco',/coledoc/],
+  ['ducto_pancreatico',/ducto pancreatico|wirsung/]
+ ])if(!pattern.test(body))errors.push('colangio_missing_'+name);
+ if(!blocks.some(b=>/(?:demais|outras) estruturas.{0,80}abdome superior/.test(norm(b.text))))errors.push('colangio_missing_other_structures_summary');
+ const incidental=state.context?.colangioRelevantOrgans??[];
+ const extra=[
+  ['figado',/\bfigado\b/],
+  ['baco',/\bbaco\b/],
+  ['adrenais',/\badrenais\b|\bsuprarrenais\b/],
+  ['rins',/\brins\b|\brim (?:direito|esquerdo)\b/],
+  ['vasos',/\bvasos abdominais\b|\baorta abdominal\b|\bveia cava\b/],
+  ['linfonodos',/\blinfonod/],
+  ['ossos',/\bestruturas osseas\b|\bossos\b/]
+ ];
+ if(!Array.isArray(incidental)||incidental.some(x=>typeof x!=='string'||!extra.some(([name])=>name===x)))return [...errors,'colangio_invalid_relevant_organs'];
+ for(const block of blocks){
+  const txt=norm(block.text);
+  for(const [name,pattern] of extra)if(pattern.test(txt)&&!incidental.includes(name))errors.push('colangio_unjustified_full_abdomen_mask_'+name);
+ }
+ return [...new Set(errors)];
+}
+// Literal mask overlay: the caller supplies the actual previously loaded source,
+// never a newly paraphrased template. Source authenticity and clinical relevance
+// remain semantic obligations; this gate checks only the declared text contract.
+function maskOverlay(mask, changes=[]) {
+ if(!mask||typeof mask.sourceId!=='string'||!mask.sourceId.trim()||!Array.isArray(mask.blocks)||!mask.blocks.length||mask.blocks.some(t=>typeof t!=='string'||!t.trim())||!Array.isArray(changes))throw Error('mask_source_required');
+ const output=[],used=new Set();let cursor=0;
+ for(const change of changes){
+  if(!change||!Number.isInteger(change.start)||!Number.isInteger(change.count)||change.start<cursor||change.start<0||change.count<1||change.start+change.count>mask.blocks.length||!Array.isArray(change.blocks)||change.blocks.some(b=>!b||typeof b.text!=='string'||!b.text.trim()||typeof b.positive!=='boolean'||!Array.isArray(b.highlights)))throw Error('invalid_mask_change');
+  if(!['finding','limitation','approved_rule'].includes(change.kind)||typeof change.support!=='string'||!change.support.trim()||(change.kind==='approved_rule'&&!/^RL-\d{3}$/.test(change.ruleId||'')))throw Error('mask_change_support_required');
+  for(let i=cursor;i<change.start;i++)output.push({text:mask.blocks[i],positive:false,highlights:[]});
+  output.push(...change.blocks.map(b=>({...b,highlights:[...b.highlights]})));
+  cursor=change.start+change.count;
+ }
+ for(let i=cursor;i<mask.blocks.length;i++)output.push({text:mask.blocks[i],positive:false,highlights:[]});
+ return output;
+}
+function validateMaskBinding(state){
+ if(isFullCTSinus(state)){
+  const m=state.sourceContract?.maskBinding?.mask, canonical=ctSinusMask();
+  if(!m||m.sourceId!==canonical.sourceId||JSON.stringify(m.blocks)!==JSON.stringify(canonical.blocks))return ['ct_sinus_mask_source_mismatch'];
+ }
+
+ const binding=state.sourceContract?.maskBinding;
+ if(isFullCTChest(state)&&binding!==undefined){
+  if(binding.mask?.sourceId!==CT_CHEST_MASK_SOURCE||JSON.stringify(binding.mask.blocks)!==JSON.stringify(CT_CHEST_MASK_BLOCKS))return ['ct_chest_canonical_mask_source_mismatch'];
+ }
+ if(isFullCTAbdomen(state)){
+  if(binding===undefined)return ['abdomen_canonical_mask_required'];
+  if(binding.mask?.sourceId!==CT_ABDOMEN_MASK_SOURCE||JSON.stringify(binding.mask.blocks)!==JSON.stringify(CT_ABDOMEN_MASK_BLOCKS))return ['abdomen_canonical_mask_source_mismatch'];
+ }
+ if(isFullCTCranium(state)&&binding!==undefined){
+  if(binding.mask?.sourceId!==CT_CRANIUM_MASK_SOURCE||JSON.stringify(binding.mask.blocks)!==JSON.stringify(CT_CRANIUM_MASK_BLOCKS))return ['ct_cranium_canonical_mask_source_mismatch'];
+ }
+ if(isFullRMCranium(state)&&binding!==undefined){
+  if(binding.mask?.sourceId!==RM_CRANIUM_MASK_SOURCE||JSON.stringify(binding.mask.blocks)!==JSON.stringify(RM_CRANIUM_MASK_BLOCKS))return ['rm_cranium_canonical_mask_source_mismatch'];
+ }
+ if(binding===undefined)return []; // Non-abdominal or PARTIAL legacy clients.
+ try{
+  const expected=maskOverlay(binding.mask,binding.changes);
+  // Canonicalize object keys only: preserve exact text, block order and highlights.
+  const canonical=blocks=>blocks.map(b=>({text:b.text,positive:b.positive,highlights:b.highlights}));
+  if(JSON.stringify(canonical(expected))!==JSON.stringify(canonical(state.analysis)))return ['mask_literal_preservation_failed'];
+ }catch(e){return [e.message];}
+ return [];
+}
+function renderMasked(state,mask,changes=[]){
+ // No clinical state is stored; both construction and final check run in one call.
+ const analysis=maskOverlay(mask,changes);
+ const bound={...state,analysis,sourceContract:{...state.sourceContract,maskBinding:{mask,changes}}};
+ return render(bound);
+}
+function renderAbdomenFull(state,changes=[]){
+ if(!isFullCTAbdomen(state))throw Error('abdomen_full_scope_required');
+ return renderMasked(state,abdomenMask(),changes);
+}
+function renderUSAbdomenFull(state,changes=[]){
+ if(!isFullUSAbdomen(state))throw Error('us_abdomen_full_scope_required');
+ return renderMasked(state,usAbdomenMask(),changes);
+}
+function renderCTCraniumFull(state,changes=[]){
+ if(!isFullCTCranium(state))throw Error('ct_cranium_full_scope_required');
+ if(!changes.length&&!(state.sourceContract?.normalStudyExplicit===true&&/\bnormal\b|sem alterac/.test(norm(state.sourceContract?.normalStudyEvidence))))throw Error('ct_cranium_normal_evidence_required');
+ return renderMasked(state,ctCraniumMask(),changes);
+}
+function renderRMCraniumFull(state,changes=[]){
+ if(!isFullRMCranium(state))throw Error('rm_cranium_full_scope_required');
+ if(!changes.length&&!(state.sourceContract?.normalStudyExplicit===true&&/\bnormal\b|sem alterac/.test(norm(state.sourceContract?.normalStudyEvidence))))throw Error('rm_cranium_normal_evidence_required');
+ return renderMasked(state,rmCraniumMask(),changes);
+}
+// Deterministic lexical invariants; diagnosis identity beyond literal anchors
+// remains a clinical review obligation. Unrelated conclusion items never satisfy certainty.
+function validateAuditInvariants(state){
+ const errors=[],title=norm(state.title),items=state.conclusion||[];
+ if(isFullCTAbdomen(state)&&state.title!=='TOMOGRAFIA COMPUTADORIZADA DE ABDOME SUPERIOR E PELVE')errors.push('abdomen_canonical_title');
+ for(const item of items){
+  if(/^sem\b/i.test(item.trim()))errors.push('conclusion_starts_sem');
+  if(/\b\d+(?:[.,]\d+)?\s*(?:mm|cm|ml|mL|litros?|milimetros?|centimetros?)\b/i.test(norm(item)))errors.push('conclusion_measurement');
+ }
+ const markers=/\b(compat[ií]ve(?:l|is) com|sugestiv[oa]s? de|provavelmente|prov[aá]ve(?:l|is)|a esclarecer|possivelmente|poss[ií]ve(?:l|is)|suspeit[oa] de|pode corresponder a|pode representar)\b/ig;
+ const family=m=>norm(m).replace('compativeis','compativel').replace(/sugestiv[oa]s?/,'sugestivo').replace('provaveis','provavel');
+ for(const block of state.analysis||[]){
+  for(const match of block.text.matchAll(markers)){
+   if(family(match[0])==='a esclarecer')continue; // trailing marker requires explicit diagnosis binding below
+   const tail=norm(block.text.slice(match.index+match[0].length)).split(/[.;]/)[0].trim();
+   const anchors=tail.split(/\s+/).filter(w=>w.length>3).slice(0,3);
+   if(!anchors.length)continue;
+   for(const item of items){
+    const n=norm(item);
+    if(anchors.every(a=>n.includes(a))&&![...item.matchAll(markers)].some(m=>family(m[0])===family(match[0])))errors.push('conclusion_certainty_changed');
+   }
+  }
+ }
+ for(const binding of state.sourceContract?.certaintyBindings||[]){
+  if(binding.omitted===true){if(typeof binding.analysisAnchor!=='string'||!state.analysis.some(b=>b.text.includes(binding.analysisAnchor))||binding.reason!=='incidental_without_clinical_relevance'||binding.reviewed!==true)errors.push('conclusion_certainty_binding');continue;}
+  const item=items[binding.conclusionIndex];
+  const sourceMarker=typeof binding.analysisAnchor==='string'?[...binding.analysisAnchor.matchAll(markers)][0]?.[0]:undefined;
+  if(!sourceMarker||typeof binding.marker!=='string'||!binding.marker.trim()||family(sourceMarker)!==family(binding.marker)||typeof binding.diagnosisAnchor!=='string'||!binding.diagnosisAnchor.trim()||!Number.isInteger(binding.conclusionIndex))errors.push('conclusion_certainty_binding');
+  if(typeof binding.analysisAnchor!=='string'||!state.analysis.some(b=>b.text.includes(binding.analysisAnchor))||typeof item!=='string'||!item.includes(binding.diagnosisAnchor)||!item.includes(binding.marker))errors.push('conclusion_certainty_binding');
+  if(typeof item==='string'&&!item.split(/[.;!?]/).some(clause=>clause.includes(binding.diagnosisAnchor)&&clause.includes(binding.marker)))errors.push('conclusion_certainty_clause_mismatch');
+ }
+ return [...new Set(errors)];
+}
+
+// Structural checks over reviewed facts, not a medical classifier or host hook.
+function validateObstetricReport(state){
+ const isObstetric=/obstetric/.test(norm(state.title||''))||state.context?.obstetric===true;
+ if(!isObstetric)return [];
+ const errors=[],tables=state.analysisTables||[],c=state.sourceContract||{};
+ const body=norm((state.analysis||[]).map(b=>b.text).join(' '));
+ const tableText=norm(tables.flatMap(t=>(t.rows||[]).map(r=>r.join(' '))).join(' '));
+ const labels=[/\bdbp\b|diametro biparietal/,/\bcc\b|circunferencia cefalica/,/\bca\b|circunferencia abdominal/,/\bcf\b|comprimento femoral/,/\bccn\b|comprimento cabeca/,/diametro medio.*saco|saco gestacional.{0,25}\d/,/vesicula vitelinica.{0,25}\d/];
+ const multiple=labels.filter(p=>p.test(body+' '+tableText)).length>=2;
+ const exception=c.tableException;
+ if(exception!==undefined&&(!exception||exception.authorizedBy!=='Lucas'||exception.scope!=='current_report'||typeof exception.reason!=='string'||!exception.reason.trim()))errors.push('obstetric_table_exception_invalid');
+ // RAD-RIS-NO-TABLE-001 supersedes mandatory obstetric tables.
+ // Biometry/Doppler values remain mandatory through source anchors and tokens.
+ if(exception&&tables.length)errors.push('obstetric_table_exception_conflict');
+ if(c.scope==='FULL'){
+  const fetalBody=body.split(/[.;]/).filter(sentence=>!/materna|maternos|materno/.test(sentence)).join(' ');
+  const explicitActivity=/(?:atividade|batimentos?|frequencia).{0,35}cardiac|\b(?:fcf|bcf)\b|\d+(?:[.,]\d+)?\s*bpm/.test(fetalBody+' '+tableText);
+  const noEmbryo=/(?:embriao|feto) nao (?:visualizado|identificado)|ausencia de (?:embriao|feto)|sem (?:embriao|feto)\b|nao ha (?:embriao|feto)|gestacao anembrion/.test(body);
+  const limited=/(?:atividade cardiaca|vitalidade).{0,35}(?:nao avaliavel|nao avaliada|avaliacao limitada)/.test(body);
+  if(!explicitActivity&&!noEmbryo&&!limited)errors.push('obstetric_cardiac_activity_required');
+ }
+ // Separate biometrics and Doppler rather than mixing their rows.
+ for(const table of tables){
+  const t=norm((table.rows||[]).map(r=>r[0]).join(' '));
+  if(/\b(?:ip|ir|rcp)\b|indice de (?:pulsatilidade|resistencia)|relacao cerebro/.test(t)&&/\b(?:dbp|cc|ca|cf|ccn)\b|diametro biparietal|circunferencia (?:cefalica|abdominal)|comprimento (?:femoral|cabeca)/.test(t))errors.push('obstetric_mixed_biometry_doppler');
+ }
+ for(const [i,b] of (state.analysis||[]).entries())if(/peso fetal estimado|\bpfe\b|percentil/.test(norm(b.text))){
+  for(const t of tables){const label=norm((t.rows||[]).map(r=>r[0]).join(' '));if(labels.some(p=>p.test(label))&&(t.afterAnalysisIndex??state.analysis.length-1)>=i)errors.push('obstetric_estimate_table_order');}
+ }
+ return errors;
+}
+function validateConclusionRelevance(state){
+ const title=norm(state.title||''),analysis=norm((state.analysis||[]).map(b=>b.text).join(' ')),conclusion=norm((state.conclusion||[]).join(' ')),indication=norm(state.indication||'');
+ const errors=[];
+ const neurovascular=/(?:angiotomografia|angio-?tc)/.test(title)&&/(?:cranio|cerebr|intracran|cervic)/.test(title);
+ const fetalVariant=/(?:padrao|origem) fetal|comunicante posterior.{0,70}\bp1\b|\bp1\b.{0,70}comunicante posterior|comunicante posterior (?:esquerda|direita) nao (?:identificada|visualizada)/.test(analysis);
+ const variantConcluded=/(?:variantes? anatomicas?|(?:padrao|origem) fetal|comunicante posterior|hipoplasia (?:do )?(?:segmento )?p1)/.test(conclusion);
+ const relevanceEvidence=typeof state.context?.anatomicalVariantRelevanceEvidence==='string'&&state.context.anatomicalVariantRelevanceEvidence.trim().length>0;
+ const relevant=/variantes? anatomicas?|avaliacao de variantes? vasculares?/.test(indication)||(state.context?.anatomicalVariantClinicallyRelevant===true&&relevanceEvidence);
+ if(neurovascular&&fetalVariant&&variantConcluded&&!relevant)errors.push('incidental_neurovascular_variant_conclusion');
+ if(!/(?:tomografia|\btc\b)/.test(title)||!/torax/.test(title))return errors;
+ const mildBone=/(?:degenerativ|espondilos|osteofit)[^.;]{0,60}(?:leve|discret)|(?:leve|discret)[^.;]{0,60}(?:degenerativ|espondilos|osteofit)/.test(analysis);
+ const focus=/dorsalgia|coluna|dor (?:dorsal|vertebral)|trauma/.test(norm(state.indication||''))||state.context?.boneFindingClinicallyRelevant===true&&typeof state.context?.boneRelevanceEvidence==='string'&&state.context.boneRelevanceEvidence.trim();
+ if(mildBone&&!focus&&state.conclusion.some(t=>/degenerativ|espondilos|osteofit/.test(norm(t))))errors.push('incidental_mild_bone_conclusion');
+ // Guardian 8.5.20 CONCLUSION_RELEVANCE_GATE (default EXCLUDE): a benign,
+ // calcified residual granuloma in the analysis must not be promoted solely
+ // because it is a positive finding. A directed clinical indication or
+ // evidence-backed relevance may authorize inclusion; the source is unchanged.
+ const residualCalcifiedGranuloma=/granulom/.test(analysis)&&/calcificad/.test(analysis)&&/sequelar|residual/.test(analysis);
+ const incidentalPromoted=state.conclusion.some(t=>/granulom|nodul(?:o|os) calcificad/.test(norm(t)));
+ const directedIndication=/granulom|nodul(?:o|os) calcificad|tubercul|histoplasmo/.test(indication);
+ const explicitlyRelevant=state.context?.incidentalFindingClinicallyRelevant===true&&typeof state.context?.incidentalRelevanceEvidence==='string'&&state.context.incidentalRelevanceEvidence.trim().length>0;
+ if(residualCalcifiedGranuloma&&incidentalPromoted&&!directedIndication&&!explicitlyRelevant)errors.push('CONCLUSION_BENIGN_INCIDENTAL_ESCAPE');
+ return errors;
+}
+function validateCertaintyCoverage(state){
+ const errors=[],bindings=state.sourceContract?.certaintyBindings||[];
+ const pattern=()=>/\b(?:compat[ií]ve(?:l|is) com|sugestiv[oa]s? de|provavelmente|prov[aá]ve(?:l|is)|a esclarecer|possivelmente|poss[ií]ve(?:l|is)|suspeit[oa] de|pode corresponder a|pode representar)\b/ig;
+ for(const block of state.analysis||[]){
+  for(const match of block.text.matchAll(pattern())){
+   if(/n[aã]o (?:[eé]|foi)\s+$/i.test(block.text.slice(0,match.index)))continue;
+   const bound=bindings.find(b=>{
+    if(typeof b.analysisAnchor!=='string')return false;
+    const at=block.text.indexOf(b.analysisAnchor);
+    return at>=0&&at<=match.index&&at+b.analysisAnchor.length>=match.index+match[0].length&&[...b.analysisAnchor.matchAll(pattern())].length===1&&b.analysisAnchor.replace(pattern(),'').trim().length>=3;
+   });
+   if(!bound)errors.push('conclusion_certainty_binding_required');
+  }
+ }
+ return errors;
+}
+
+
+// One transient constructor. Facts are supplied from reviewed source, never
+// harvested from generated prose to make an omission pass validation.
+function isCombinedAbdomenMRI(state){
+ const c=state.sourceContract||{};
+ return Array.isArray(c.examComponents)&&c.examComponents.includes('abdome_superior')&&c.examComponents.includes('colangiorressonancia')&&typeof c.examComponentsEvidence==='string'&&c.examComponentsEvidence.trim().length>0;
+}
+function validateCombinedAbdomenMRI(state){
+ const text=norm(state.analysis.map(b=>b.text).join(' ')),errors=[];
+ for(const [name,pattern] of [['figado',/figado|hepatic/],['vesicula',/vesicul/],['vias_biliares',/vias biliares/],['coledoco',/coledoc/],['ducto_pancreatico',/ducto pancreatico|wirsung/],['pancreas',/\bpancreas\b/],['baco',/baco/],['adrenais',/adrena|suprarren/],['rins',/rins|rim direito.*rim esquerdo/],['vasos',/vasos|aorta/],['linfonodos',/linfonod/],['liquido_livre',/liquido livre|ascite/],['ossos',/osse|ossos/]])if(!pattern.test(text))errors.push('combined_mri_missing_'+name);
+ if(state.analysis.some(b=>/pancrea/.test(norm(b.text))&&/baco/.test(norm(b.text))))errors.push('combined_mri_pancreas_spleen_separate_blocks');
+ return errors;
+}
+function validateReviewedSources(state){
+ const c=state.sourceContract||{},errors=[];
+ if(c.requiredSourceIds!==undefined){
+  if(!Array.isArray(c.requiredSourceIds)||c.requiredSourceIds.some(id=>typeof id!=='string'||!id.trim())||new Set(c.requiredSourceIds).size!==c.requiredSourceIds.length)errors.push('invalid_required_sources');
+  else for(const id of c.requiredSourceIds){
+   const review=Array.isArray(c.sourceReviews)?c.sourceReviews.filter(r=>r.id===id):[];
+   if(review.length!==1||review[0].status!=='reviewed'||typeof review[0].evidence!=='string'||!review[0].evidence.trim())errors.push('required_source_not_reviewed');
+  }
+ }
+ if(c.requestedTitle!==undefined&&(typeof c.requestedTitle!=='string'||!c.requestedTitle.trim()||state.title!==c.requestedTitle))errors.push('requested_exam_title_changed');
+ if(c.examComponents!==undefined){
+  if(!isCombinedAbdomenMRI(state))errors.push('combined_mri_source_evidence_required');
+  else if(!/ressonancia.*abdome superior/.test(norm(state.title))||!/colangiorressonancia/.test(norm(state.title)))errors.push('combined_mri_title_missing_component');
+ }
+ if(c.forbiddenClinicalTerms!==undefined){
+  if(!Array.isArray(c.forbiddenClinicalTerms)||c.forbiddenClinicalTerms.some(t=>typeof t!=='string'||!t.trim()))errors.push('invalid_clinical_exclusions');
+  else {const text=norm([...state.analysis.map(b=>b.text),...state.conclusion].join(' '));for(const term of c.forbiddenClinicalTerms)if(text.includes(norm(term)))errors.push('irrelevant_diagnosis_reintroduced');}
+ }
+ return errors;
+}
+function validateFactLaterality(f){
+ if(f.requiresLaterality!==true)return;
+ if(!['right','left','bilateral','midline'].includes(f.laterality)||typeof f.lateralityEvidence!=='string'||!f.lateralityEvidence.trim())throw Error('required_laterality_missing');
+ const clean=t=>norm(t).replace(/\s+/g,' ').trim();
+ const side={right:/\bdireit[oa]s?\b/,left:/\besquerd[oa]s?\b/,bilateral:/\bbilatera(?:l|is)\b|\bambos\b|\bambas\b/,midline:/\bmedian[oa]s?\b|\blinha media\b/}[f.laterality];
+ if(!clean(f.sourceText).includes(clean(f.lateralityEvidence))||!side.test(clean(f.lateralityEvidence)))throw Error('laterality_source_mismatch');
+ if(!side.test(clean(f.analysisAnchor)))throw Error('laterality_analysis_mismatch');
+}
+// Scope an extent adjective to the source finding it qualifies. A large
+// amount of portal venous gas must not be propagated to nearby free gas.
+function validatePneumoperitoneumExtent(state,facts){
+ const visible=norm([...(state.analysis||[]).map(b=>b.text),...(state.conclusion||[])].join(' '));
+ const qualified=/(?:\bpneumoperitonio\s+(?:volumos[oa]s?|extens[oa]s?|acentuad[oa]s?)\b|\b(?:volumos[oa]s?|extens[oa]s?|acentuad[oa]s?)\s+pneumoperitonio\b)/.test(visible);
+ if(!qualified)return;
+ const entities='(?:pneumoperitonio|gas livre|gas intraperitoneal|gas extraluminal|ar livre|ar intraperitoneal)';
+ const degree='(?:volumos[oa]s?|extens[oa]s?|acentuad[oa]s?|grande|ampl[oa]s?|abundant[ea]s?|expressiv[oa]s?)';
+ const patterns=[new RegExp('\\b'+degree+'\\b(?:\\s+(?:quantidade|volume|de|do|da)){0,3}\\s+\\b'+entities+'\\b'),new RegExp('\\b'+entities+'\\b(?:\\s+(?:de|em|quantidade|volume|muito)){0,3}\\s+\\b'+degree+'\\b')];
+ const supported=facts.some(f=>norm(f.sourceText).split(/[;,]/).some(clause=>patterns.some(re=>re.test(clause))));
+ if(!supported)throw Error('pneumoperitoneum_extent_without_scoped_source');
+}
+function buildClinicalState(input){
+ if(!input||!input.case||!input.state)throw Error('clinical_input_required');
+ const c=input.case;
+ for(const key of ['id','modality','region'])if(typeof c[key]!=='string'||!c[key].trim())throw Error('case_identity_required');
+ if(!['new','revision'].includes(c.intent))throw Error('case_intent_required');
+ if(c.intent==='new'&&input.predecessor)throw Error('new_case_predecessor_forbidden');
+ if(c.intent==='revision'){
+  const prev=input.predecessor;
+  if(!prev||['id','modality','region'].some(k=>prev.case?.[k]!==c[k]))throw Error('revision_case_mismatch');
+ }
+ // No module/session/global clinical state. Revision base belongs to this call.
+ const previous=c.intent==='revision'?input.predecessor.state:{};
+ const state=JSON.parse(JSON.stringify({...previous,...input.state,context:{...previous.context,...input.state.context},sourceContract:{...previous.sourceContract,...input.state.sourceContract}}));
+ if(!Array.isArray(input.facts))throw Error('reviewed_source_facts_required');
+ const facts=input.facts;
+ for(const f of facts){
+  if(f.caseId!==c.id)throw Error('foreign_case_fact');
+  if(typeof f.sourceText!=='string'||!f.sourceText.trim()||typeof f.analysisAnchor!=='string'||!f.analysisAnchor.trim())throw Error('source_fact_binding_required');
+  validateFactLaterality(f);
+ }
+ const contract=state.sourceContract||{};
+ const retired=input.retiredAnalysisAnchors??[];
+ if(!Array.isArray(retired)||retired.some(r=>!r||typeof r.anchor!=='string'||!r.anchor.trim()||typeof r.correctionEvidence!=='string'||!r.correctionEvidence.trim()))throw Error('invalid_retired_analysis_anchor');
+ if(retired.length&&(c.intent!=='revision'||retired.some(r=>!(previous.sourceContract?.analysisAnchors||[]).includes(r.anchor))))throw Error('retired_anchor_not_in_predecessor');
+ const retained=c.intent==='revision'?(previous.sourceContract?.analysisAnchors||[]).filter(a=>!retired.some(r=>r.anchor===a)):[];
+ contract.analysisAnchors=[...new Set([...retained,...(contract.analysisAnchors||[])])].filter(a=>!retired.some(r=>r.anchor===a));
+ if(contract.forbiddenConclusion!==undefined&&!Array.isArray(contract.forbiddenConclusion))throw Error('invalid_conclusion_exclusions');
+ if(facts.some(f=>f.forbiddenConclusion!==undefined&&!Array.isArray(f.forbiddenConclusion)))throw Error('invalid_conclusion_exclusions');
+ if(!['FULL','PARTIAL'].includes(contract.scope))throw Error('clinical_scope_required');
+ if(input.route==='ct-chest-full'&&!isFullCTChest(state))throw Error('ct_chest_full_scope_required');
+ if(input.route==='ct-chest-full'&&!(input.changes||[]).length){
+  if(facts.length)throw Error('ct_chest_positive_fact_requires_patch');
+  if(contract.normalStudyExplicit!==true||typeof contract.normalStudyEvidence!=='string'||!/\bnormal\b|sem alterac/.test(norm(contract.normalStudyEvidence)))throw Error('ct_chest_normal_evidence_required');
+ }
+ if(input.route==='abdomen-full'&&!isFullCTAbdomen(state))throw Error('abdomen_full_scope_required');
+ if(input.route==='us-abdomen-full'&&!isFullUSAbdomen(state))throw Error('us_abdomen_full_scope_required');
+ if(input.route==='us-doppler-venoso-mmii-full'&&!isFullUSDopplerMMII(state))throw Error('us_doppler_mmii_full_scope_required');
+ if(input.route==='us-doppler-venoso-mmii-full'&&!(input.changes||[]).length){
+  if(facts.length)throw Error('us_doppler_mmii_positive_fact_requires_patch');
+  if(contract.normalStudyExplicit!==true||typeof contract.normalStudyEvidence!=='string'||!/\bnormal\b|sem alterac/.test(norm(contract.normalStudyEvidence)))throw Error('us_doppler_mmii_normal_evidence_required');
+ }
+ if(input.route==='ct-cranium-full'&&!isFullCTCranium(state))throw Error('ct_cranium_full_scope_required');
+ if(input.route==='rm-cranium-full'&&!isFullRMCranium(state))throw Error('rm_cranium_full_scope_required');
+ if(input.route==='ct-sinus-full'&&!isFullCTSinus(state))throw Error('ct_sinus_full_scope_required');
+ if(input.route==='ct-sinus-full'&&!(input.changes||[]).length){
+  if(facts.length)throw Error('ct_sinus_positive_fact_requires_patch');
+  if(contract.normalStudyExplicit!==true||! /\bnormal\b|sem alterac/.test(norm(contract.normalStudyEvidence||'')))throw Error('ct_sinus_normal_evidence_required');
+ }
+ if(input.route==='masked'&&!input.mask)throw Error('masked_route_mask_required');
+ if(input.route==='ct-cranium-full'&&!(input.changes||[]).length){
+  if(facts.length)throw Error('ct_cranium_positive_fact_requires_patch');
+  if(contract.normalStudyExplicit!==true||typeof contract.normalStudyEvidence!=='string'||!/\bnormal\b|sem alterac/.test(norm(contract.normalStudyEvidence)))throw Error('ct_cranium_normal_evidence_required');
+ }
+ if(input.route==='rm-cranium-full'&&!(input.changes||[]).length){
+  if(facts.length)throw Error('rm_cranium_positive_fact_requires_patch');
+  if(contract.normalStudyExplicit!==true||typeof contract.normalStudyEvidence!=='string'||!/\bnormal\b|sem alterac/.test(norm(contract.normalStudyEvidence)))throw Error('rm_cranium_normal_evidence_required');
+ }
+ const mask=input.route==='ct-sinus-full'?ctSinusMask():input.route==='ct-chest-full'?ctChestMask():input.route==='abdomen-full'?abdomenMask():input.route==='us-abdomen-full'?usAbdomenMask():input.route==='us-doppler-venoso-mmii-full'?usDopplerMask(state.title):input.route==='ct-cranium-full'?ctCraniumMask():input.route==='rm-cranium-full'?rmCraniumMask():input.route==='rm-pelvis-endo-full'?rmPelvisEndometriosisNormalMask():input.mask;
+ if(input.route&&!['ct-sinus-full','ct-chest-full','abdomen-full','us-abdomen-full','us-doppler-venoso-mmii-full','ct-cranium-full','rm-cranium-full','rm-pelvis-endo-full','masked','direct'].includes(input.route))throw Error('unsupported_render_route');
+ if(mask){state.analysis=maskOverlay(mask,input.changes||[]);contract.maskBinding={mask,changes:input.changes||[]};}
+ if(!Array.isArray(state.analysis))throw Error('analysis_required');
+ validatePneumoperitoneumExtent(state,facts);
+ // Explicit reviewed contract is preserved: missing source anchors still block.
+ state.sourceContract={...contract,indication:contract.indication??state.indication,
+  analysisAnchors:[...new Set([...(contract.analysisAnchors||[]),...facts.map(f=>f.analysisAnchor)])],
+  forbiddenAnalysis:[...new Set([...(contract.forbiddenAnalysis||[]),...facts.flatMap(f=>f.forbiddenAnalysis||[])])],
+  forbiddenConclusion:[...new Set([...(contract.forbiddenConclusion||[]),...facts.flatMap(f=>f.forbiddenConclusion||[])])]};
+ const context=state.context||{};
+ // Flags describe selected recommendation workflow, not negative patient history.
+ state.context={suspectedBladderNeoplasm:false,bladderMRIRecommended:false,ivContrastContraindicated:false,...context};
+ if((state.analysisTables||[]).length&&!(context.tablesExplicitlyRequested===true&&typeof context.tableRequestEvidence==='string'&&context.tableRequestEvidence.trim()))throw Error('ris_tables_require_explicit_request');
+ return state;
+}
+function renderClinical(input){return render(buildClinicalState(input));}
+function validateLocalLimitations(state){
+ const text=norm((state.analysis||[]).map(b=>b.text).join(' ')),errors=[];
+ const rules=[
+  [/bexiga.{0,25}(?:vazia|colabada|nao repleta)/,/bexiga.{0,90}(?:contornos regulares|sem espessamento|paredes (?:finas|normais))/,'bladder_normality_under_limitation'],
+  [/difusao.{0,60}(?:inadequada|nao avaliavel|prejudicada)/,/(?:ausencia|sem sinais|sem) de restricao|nao ha restricao/,'diffusion_normality_under_limitation'],
+  [/(?:escassez|paucidade).{0,50}gordura.{0,100}(?:prejudic|limit)/,/planos (?:adiposos |gordurosos )?(?:preservados|bem delimitados)/,'planes_normality_under_limitation']
+ ];
+ for(const [limited,negative,code]of rules)if(limited.test(text)&&negative.test(text))errors.push(code);
+ return errors;
+}
+
+
+// Final response boundary: only returns after the clinical renderer succeeds.
+// The host can still bypass this API; never claim universal interception.
+function validateDeliveryLexicon(text){
+ const visible=String(text).replace(/<[^>]*>/g,'').replace(/&#(\d+);|&#x([0-9a-f]+);/gi,(_,d,h)=>String.fromCodePoint(parseInt(d||h,d?10:16)));
+ return /\bcolonic[oa]s?\b/.test(norm(visible))?['RL_LEXICON_COLON_FORBIDDEN']:[];
+}
+function renderReply(input,reply={}){
+ if(reply.pendingErrors?.length)throw Error('unresolved_validation_rejection');
+ if(reply.hasClinicalQuestion===true&&(typeof reply.comment!=='string'||!reply.comment.trim()))throw Error('clinical_comment_required');
+ if(reply.comment!==undefined&&(typeof reply.comment!=='string'||/```|<\/?(?:div|script|table)\b/i.test(reply.comment)))throw Error('invalid_clinical_comment');
+ const comment=reply.comment?.trim()||'';
+ const lex=validateDeliveryLexicon(comment);if(lex.length)throw Error(lex.join(','));
+ const report=renderClinical(input); // Never catch and substitute manual HTML.
+ // renderClinical already validated the immutable report string with full context.
+ return report+(comment?'\n\n'+comment:'');
+}
+
+// RL-040: three distinct territory blocks when all three are present in a FULL study.
+// Does not infer absent scan segments or impose grouping on PARTIAL protocols.
+function validateArterialMMIIGrouping(state){
+ const title=norm(state.title),scope=state.sourceContract?.scope;
+ if(scope!=='FULL'||!/doppler/.test(title)||!/arterial/.test(title)||!/(?:membros inferiores|mmii)/.test(title))return [];
+ const cover=(state.analysis||[]).map(b=>{
+  const t=norm(b.text);
+  return [/(?:\bfemoral\b|\bfemorais\b)/.test(t),/\bpoplite(?:a|as|o|os)\b/.test(t),/\btibiais?\b|\bfibulares?\b/.test(t)];
+ });
+ if(![0,1,2].every(i=>cover.some(g=>g[i])))return [];
+ const dedicated=[0,1,2].every(i=>cover.some(g=>g[i]&&g.filter(Boolean).length===1));
+ return dedicated?[]:['arterial_mmii_territories_condensed'];
+}
+
+function render(state){
+ const sourceErrors=[...validateReviewedSources(state),...validateSourceContract(state),...validateComparisonIdentityOnly(state),...validateDeviceLocalizationTautology(state),...validateLocalLimitations(state),...validateCTContrastProvenance(state),...validateReasoningContract(state),...validateLocalRecommendationFeasibility(state),...validateFullCompartments(state),...validateTransvaginalOvaryDescription(state),...validateAgeAwareOvarianSize(state),...validateMaskBinding(state),...validateColangioScope(state),...validateObstetricReport(state),...validateArterialMMIIGrouping(state)];if(sourceErrors.length)throw Error(sourceErrors.join(','));
+ const afternoonErrors=[...validateAuditInvariants(state),...validateAfternoonContext(state),...validateCorrelatedFindingGroups(state),...validateCertaintyCoverage(state),...validateConclusionRelevance(state)];if(afternoonErrors.length)throw Error(afternoonErrors.join(','));
+ if(!state.context || ['suspectedBladderNeoplasm','bladderMRIRecommended','ivContrastContraindicated'].some(k=>typeof state.context[k]!=='boolean'))throw Error('explicit recommendation context required');
+ const ris=compileReport(state);
+ const errors=validateFullRIS(ris,{...state.context,recommendationText:state.conclusion.join(' ')});
+ if(errors.length)throw Error(errors.join(','));
+ return ris;
+}
+function rmPelvisEndometriosisNormalMask(){return {sourceId:'RM_PELVIS_ENDOMETRIOSIS_NORMAL_FULL_001',blocks:[
+'Útero com dimensões, contornos e sinal miometrial preservados.',
+'Zona juncional com espessura preservada, sem sinais de adenomiose. Endométrio sem alterações significativas.',
+'Colo uterino e vagina sem alterações significativas.',
+'Ovários com dimensões e características habituais, sem lesões anexiais.',
+'Compartimento anterior, incluindo os espaços vesicouterino e vesicovaginal, sem nódulos ou espessamentos. Bexiga sem alterações parietais evidentes.',
+'Ligamentos uterossacros, torus uterino, paramétrios e região retrocervical sem espessamentos ou nódulos.',
+'Septo retovaginal, fórnice vaginal posterior e fundo de saco posterior sem alterações significativas.',
+'Retossigmoide e demais alças intestinais pélvicas sem espessamentos parietais focais evidentes.',
+'Ligamentos redondos e fossas ovarianas sem espessamentos nodulares. Ureteres pélvicos sem dilatação.',
+'Ausência de hidrossalpinge, coleções ou líquido livre pélvico significativo.',
+'Estruturas ósseas e planos musculares incluídos sem alterações focais evidentes.'
+]};}
+const createClinicalEntry=(core=>{
+const specs=Object.freeze({
+ 'ct-chest-full':['TC','tórax','TOMOGRAFIA COMPUTADORIZADA DO TÓRAX','tórax','Ausência de alterações tomográficas torácicas significativas.'],
+ 'ct-cranium-full':['TC','crânio','TOMOGRAFIA COMPUTADORIZADA DO CRÂNIO','crânio','Ausência de alterações tomográficas intracranianas significativas.'],
+ 'abdomen-full':['TC','abdome e pelve','TOMOGRAFIA COMPUTADORIZADA DE ABDOME SUPERIOR E PELVE','abdome e pelve','Ausência de alterações tomográficas abdominopélvicas significativas.'],
+ 'us-abdomen-full':['US','abdome','ULTRASSONOGRAFIA DO ABDOME TOTAL',null,'Ausência de alterações ultrassonográficas abdominais significativas.'],
+ 'us-doppler-venoso-mmii-full':['US','membros inferiores','__LATERALIDADE__',null,'__LATERALIDADE__'],
+ 'rm-cranium-full':['RM','crânio','RESSONÂNCIA MAGNÉTICA DO CRÂNIO',null,'Ausência de alterações significativas no estudo por ressonância magnética do crânio.'],
+ 'rm-pelvis-endo-full':['RM','pelve','RESSONÂNCIA MAGNÉTICA DA PELVE',null,'Ausência de sinais de endometriose pélvica no presente estudo.']
+});
+const text=(x,name)=>{if(typeof x!=='string'||!x.trim()||/[\r\n]/.test(x))throw Error('required_'+name);return x;};
+function normalInput(q){
+ if(!q||!specs[q.route])throw Error('normal_route_unsupported');
+ let [modality,region,title,segment,conclusion]=specs[q.route];
+ let dopplerTechnique=null;
+ if(q.route==='us-doppler-venoso-mmii-full'){
+  // Lateralidade nunca é inferida: precisa vir explícita do ditado.
+  if(!['direito','esquerdo','bilateral'].includes(q.laterality))throw Error('doppler_laterality_required');
+  title=US_DOPPLER_MMII_TITLES[q.laterality];
+  region=q.laterality==='bilateral'?'membros inferiores':'membro inferior '+q.laterality;
+  conclusion=q.laterality==='bilateral'?'Ausência de trombose venosa superficial e profunda em membros inferiores ao estudo Dopplerfluxométrico.':'Ausência de sinais ecográficos de trombose venosa superficial e profunda em membro inferior '+q.laterality+' ao estudo Dopplerfluxométrico.';
+  dopplerTechnique='ecodoppler venoso '+(q.laterality==='bilateral'?'dos membros inferiores':'do membro inferior '+q.laterality)+', direcionado para a pesquisa de trombose venosa.';
+ }
+ // This entry is intentionally narrow; positive, revision, contrast, uncertain,
+ // limited or comparison cases go through renderReviewed with the full contract.
+ const allowed=['id','route','indication','normalEvidence','technique','urgency'].concat(q.route==='us-doppler-venoso-mmii-full'?['laterality']:[]);
+ if(Object.keys(q).some(k=>!allowed.includes(k)))throw Error('normal_request_requires_reviewed_route');
+ text(q.id,'case_id');text(q.indication,'indication');
+ const evidence=text(q.normalEvidence,'normal_evidence');
+ if(!/^\s*(?:normal|sem alteraç(?:ões|ão)(?: significativas?)?)[.!]?\s*$/iu.test(evidence))throw Error('normal_explicit_evidence_required');
+ if(q.technique!==undefined&&modality!=='RM')throw Error('normal_protocol_requires_reviewed_route');
+ if(q.urgency!==undefined&&(!q.urgency||!['elective','ambulatory','nonurgent','urgent'].includes(q.urgency.kind)))throw Error('invalid_urgency');
+ const sourceContract={scope:'FULL',indication:q.indication,normalStudyExplicit:true,normalStudyEvidence:evidence,analysisAnchors:[],forbiddenAnalysis:[]};
+ let urgent=modality!=='RM';
+ if(q.urgency){
+  const evidence=text(q.urgency.evidence,'urgency_evidence');
+  if(modality==='RM'){if(q.urgency.kind==='urgent'){urgent=true;Object.assign(sourceContract,{explicitUrgency:true,explicitUrgencyEvidence:evidence});}}
+  else {urgent=q.urgency.kind==='urgent';Object.assign(sourceContract,{urgencyDisposition:q.urgency.kind,urgencyDispositionEvidence:evidence});}
+ }
+ const technique=dopplerTechnique?dopplerTechnique:segment?'aquisições tomográficas volumétricas do '+segment+' realizadas sem administração de meio de contraste intravenoso.':modality==='US'?'exame realizado por via transabdominal com transdutor convexo multifrequencial.':q.route==='rm-pelvis-endo-full'?'estudo por ressonância magnética da pelve.':text(q.technique,'mri_technique');
+ return {case:{id:q.id,modality,region,intent:'new'},state:{title,indication:q.indication,technique,comparison:'exames anteriores não fornecidos para comparação.',urgent_subtitle:urgent,conclusion:[conclusion],context:{},sourceContract},facts:[],route:q.route,changes:[]};
+}
+function renderNormal(q){return core.renderReply(normalInput(q),{});}
+function renderReviewed(input,reply={}){return core.renderReply(input,reply);}
+function renderPositive(q){
+ // Simplified path for positive findings: starts from the normal mask,
+ // applies changes (block substitutions) and a custom conclusion,
+ // without the full reviewed contract (no certaintyBindings, facts, etc.).
+ if(!q||!specs[q.route])throw Error('normal_route_unsupported');
+ if(!Array.isArray(q.changes)||!q.changes.length)throw Error('positive_changes_required');
+ if(!Array.isArray(q.conclusion)||!q.conclusion.length)throw Error('positive_conclusion_required');
+ let [modality,region,title,segment]=specs[q.route];
+ let dopplerTechnique=null;
+ if(q.route==='us-doppler-venoso-mmii-full'){
+  if(!['direito','esquerdo','bilateral'].includes(q.laterality))throw Error('doppler_laterality_required');
+  title=US_DOPPLER_MMII_TITLES[q.laterality];
+  segment=q.laterality==='bilateral'?'membros inferiores':'membro inferior '+q.laterality;
+  dopplerTechnique='ecodoppler venoso '+(q.laterality==='bilateral'?'dos membros inferiores':'do membro inferior '+q.laterality)+', direcionado para a pesquisa de trombose venosa.';
+ }
+ text(q.id,'case_id');text(q.indication,'indication');
+ const technique=dopplerTechnique?dopplerTechnique:segment?'aquisições tomográficas volumétricas do '+segment+' realizadas sem administração de meio de contraste intravenoso.':modality==='US'?'exame realizado por via transabdominal com transdutor convexo multifrequencial.':q.route==='rm-pelvis-endo-full'?'estudo por ressonância magnética da pelve.':text(q.technique,'mri_technique');
+ const routeMask=q.route==='ct-sinus-full'?core.ctSinusMask():q.route==='ct-chest-full'?core.ctChestMask():q.route==='abdomen-full'?core.abdomenMask():q.route==='us-abdomen-full'?core.usAbdomenMask():q.route==='us-doppler-venoso-mmii-full'?usDopplerMask(title):q.route==='ct-cranium-full'?core.ctCraniumMask():q.route==='rm-cranium-full'?core.rmCraniumMask():null;
+ if(!routeMask)throw Error('positive_route_mask_unavailable');
+ const analysis=core.maskOverlay(routeMask,q.changes);
+ const urgent=modality!=='RM';
+ const state={title,indication:q.indication,technique,comparison:q.comparison||'exames anteriores não fornecidos para comparação.',urgent_subtitle:urgent,analysis,conclusion:q.conclusion,context:{suspectedBladderNeoplasm:false,bladderMRIRecommended:false,ivContrastContraindicated:false,...(q.context||{})},sourceContract:{scope:'FULL',indication:q.indication}};
+ const ris=compileReport(state);
+ const compartmentErrors=validateFullCompartments(state);
+ if(compartmentErrors.length)throw Error(compartmentErrors.join(','));
+ const fmtErrors=core.validate(ris);
+ if(fmtErrors.length)throw Error(fmtErrors.join(','));
+ return ris;
+}
+return Object.freeze({version:1,routes:Object.freeze(Object.keys(specs)),normalInput,renderNormal,renderReviewed,renderPositive});
+});
+const api={ctSinusMask,ctChestMask,renderReply,validateDeliveryLexicon,buildClinicalState,renderClinical,renderMasked,renderAbdomenFull,renderUSAbdomenFull,renderCTCraniumFull,renderRMCraniumFull,render,abdomenMask,usAbdomenMask,ctCraniumMask,rmCraniumMask,maskOverlay,validate:validateFullRIS};
+return Object.freeze({...api,...createClinicalEntry(api)});
+})()
+</script>
+<script>
+(function(){
+ let core=null, html='';
+ const $=id=>document.getElementById(id);
+ const ERROS={normal_route_unsupported:'exame sem máscara',doppler_laterality_required:'escolha a lateralidade',mri_technique_required:'preencha a técnica da RM'};
+ function setStatus(ok,msg){const s=$('status');s.className='status '+(ok?'ok':'err');s.textContent=msg;}
+ try{core=Function('return '+$('motor').textContent)();}catch(e){setStatus(false,'Não carregou: '+e.message);}
+ const ponto=s=>{s=String(s||'').trim();if(!s)return s;s=s.charAt(0).toLowerCase()+s.slice(1);return /[.!?]$/.test(s)?s:s+'.';};
+ function syncFields(){
+  const r=$('rota').value;
+  $('lat-wrap').classList.toggle('hidden',r!=='us-doppler-venoso-mmii-full');
+  $('tec-wrap').classList.toggle('hidden',r!=='rm-cranium-full');
+  $('row-extra').classList.toggle('hidden',r!=='us-doppler-venoso-mmii-full'&&r!=='rm-cranium-full');
+ }
+ function gerar(){
+  if(!core)return;
+  const r=$('rota').value;
+  const q={id:'caso-'+Date.now(),route:r,indication:ponto($('indicacao').value)||'não informada.',normalEvidence:'normal'};
+  if(r==='us-doppler-venoso-mmii-full')q.laterality=$('lateralidade').value;
+  if(r==='rm-cranium-full')q.technique=ponto($('tecnica').value);
+  try{
+   html=core.renderNormal(q).slice(8,-4);
+   $('preview').innerHTML=html;
+   setStatus(true,'Validado: formato RIS e cobertura de compartimentos OK.');
+  }catch(e){const c=String(e&&e.message||e);setStatus(false,'Bloqueado: '+(ERROS[c]||c)+'.');}
+ }
+ $('rota').addEventListener('change',syncFields);
+ $('btn-normal').addEventListener('click',gerar);
+ function flash(b,t){const o=b.textContent;b.textContent=t;setTimeout(()=>b.textContent=o,1500);}
+ function fallbackCopy(node){const r=document.createRange();r.selectNodeContents(node);const s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');}catch(e){}s.removeAllRanges();}
+ $('btn-html').addEventListener('click',()=>{
+  const b=$('btn-html');
+  const fb=()=>{const t=document.createElement('textarea');t.value=html;document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(e){}t.remove();flash(b,'Copiado');};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(html).then(()=>flash(b,'Copiado')).catch(fb);else fb();
+ });
+ $('btn-fmt').addEventListener('click',()=>{
+  const b=$('btn-fmt');
+  try{
+   const item=new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([$('preview').innerText],{type:'text/plain'})});
+   navigator.clipboard.write([item]).then(()=>flash(b,'Copiado')).catch(()=>{fallbackCopy($('preview'));flash(b,'Copiado');});
+  }catch(e){fallbackCopy($('preview'));flash(b,'Copiado');}
+ });
+ syncFields();
+ gerar();
+})();
+</script>
+</body>
+</html>
